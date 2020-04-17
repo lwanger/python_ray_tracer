@@ -9,7 +9,6 @@ from PIL import Image
 
 class FrameBuffer():
     def __init__(self, x_size: int, y_size: int, dtype=np.int8):
-    # def make_framebuffer(x_size: int, y_size: int, dtype=np.int8) -> np.array:
         """
         Create a numpy array to act as a framebuffer.
 
@@ -23,6 +22,12 @@ class FrameBuffer():
         self.x_size = x_size
         self.y_size = y_size
         self.dtype = dtype
+
+    def get_x_size(self):
+        return self.x_size
+
+    def get_y_size(self):
+        return self.y_size
 
     def get_shape(self):
         return self.fb.shape
