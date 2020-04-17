@@ -1,4 +1,4 @@
-# c-s_292
+# CS_292
 
 In 1980 Ed Catmull and a number of the computer graphics wizards from Lucasfilm (Jim Blinn, Loren Carpenter, and Alvy Ray Smith) taught a computer graphics class at Berkeley. THis class is on Youtube at:https://www.youtube.com/channel/UCNXre0qpHjdhC29xH8WkKnw.
 
