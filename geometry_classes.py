@@ -107,6 +107,8 @@ class Vec3(numpy.ndarray):
 def cross(a: Vec3, b: Vec3):
     return Vec3(numpy.cross(a, b))
 
+def dot(a: Vec3, b: Vec3):
+    return numpy.dot(a, b)
 
 
 class Ray():
