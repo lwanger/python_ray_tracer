@@ -4,9 +4,12 @@ Geometry Classes
 TODO:
     - create pytest tests for Vec3 and Ray
 """
+
+from abc import ABC, abstractmethod
 import numbers
 import numpy
 import math
+from typing import Optional
 
 _TINY = 1e-15
 
@@ -31,6 +34,10 @@ def _args2tuple(funcname, args):
         return tuple(map(float, data))
     except (TypeError, ValueError):
         raise TypeError("vec3.%s() can't convert elements to float" % funcname)
+
+
+def degrees_to_radians(degrees: float):
+    return degrees * math.pi / 180
 
 
 class Vec3(numpy.ndarray):
@@ -123,6 +130,105 @@ class Ray():
 
     def at(self, t):
         return self.origin + t * self.direction
+
+
+class HitRecord():
+
+    def __init__(self, point: Vec3, normal: Vec3, t: float):
+        self.point = point
+        self.normal = normal
+        self.t = t
+        self.front_face = None
+
+    def __repr__(self):
+        return f'HitRecord(point={self.point}, normal={self.normal}, t={self.t}, front_face={self.front_face})'
+
+    def set_face_normal(self, ray: Ray, outward_normal: Vec3):
+        dp = dot(ray.direction, outward_normal)
+        if dp < 0:
+            self.front_face = True
+            self.normal = outward_normal
+        else:
+            self.front_face = False
+            self.normal = -outward_normal
+
+
+class Geometry(ABC):
+    # abstract base class for hittable geometry
+    @abstractmethod
+    def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
+        pass
+
+
+class GeometryList():
+    def __init__(self, initial_list=None):
+        if initial_list is None:
+            self.list = []
+        else:
+            self.list = initial_list
+
+    def __iter__(self):
+        return self.list.__iter__()
+
+    def __repr__(self):
+        return f'GeometryList(list={len(self.list)} items)'
+
+    def add(self, geom: Geometry):
+        self.list.append(geom)
+
+    def clear(self):
+        self.list = []
+
+    def hit(self, ray: Ray,t_min: float, t_max: float):
+        closest_so_far = t_max
+        hr = None
+
+        for geom in self.list:
+            new_hr = geom.hit(ray, t_min, closest_so_far)
+            if new_hr is not None:
+                closest_so_far = new_hr.t
+                hr = new_hr
+
+        return hr
+
+
+class Sphere(Geometry):
+    def __init__(self, center: Vec3, radius: float):
+        self.center = center
+        self.radius = radius
+
+    def __repr__(self):
+        return f'Sphere(center={self.center}, radius={self.radius})'
+
+    def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
+        hr = None
+        oc = ray.origin - self.center
+        a = ray.direction.squared_length()
+        half_b = dot(oc, ray.direction)
+        c = oc.squared_length() - self.radius ** 2
+        discriminant = half_b ** 2 - a * c
+
+        if discriminant > 0:
+            root = math.sqrt(discriminant)
+            t = (-half_b - root) / a
+
+            if t_min < t < t_max:
+                p = ray.at(t)
+                n = (p - self.center) / self.radius
+                hr = HitRecord(point=p, normal=n, t=t)
+            else:
+                t = (-half_b + root) / a
+
+                if t_min < t < t_max:
+                    p = ray.at(t)
+                    n = (p - self.center) / self.radius
+                    hr = HitRecord(point=p, normal=n, t=t)
+
+            if hr is not None:
+                outward_normal = Vec3(hr.point - self.center) / self.radius
+                hr.set_face_normal(ray, outward_normal)
+
+        return hr
 
 
 if __name__ == '__main__':
