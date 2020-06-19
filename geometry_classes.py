@@ -205,38 +205,6 @@ class Material(ABC):
         pass
 
 
-def reflect(v: Vec3, n: Vec3):
-    return v - 2 * dot(v,n) * n
-
-
-class Lambertian(Material):
-    def __init__(self, color: Vec3):
-        self.albedo = color
-
-    def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
-        scatter_direction = hr.normal + random_unit_vec3()
-        scattered = Ray(hr.point, scatter_direction)
-        attenuation = self.albedo
-        return MaterialReturn(True, scattered, attenuation)
-
-
-class Metal(Material):
-    def __init__(self, color: Vec3, fuzziness:float=1.0):
-        self.albedo = color
-        if fuzziness > 1.0:
-            self.fuzziness = 1.0
-        else:
-            self.fuzziness = fuzziness
-
-    def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
-        unit_vector = ray_in.direction.unit_vector()
-        reflected = reflect(unit_vector, hr.normal)
-        scattered = Ray(hr.point, reflected + self.fuzziness * random_in_unit_sphere())
-        attenuation = self.albedo
-        more = dot(scattered.direction, hr.normal) > 0
-        return MaterialReturn(more, scattered, attenuation)
-
-
 class HitRecord():
 
     def __init__(self, point: Vec3, normal: Vec3, t: float, material: Material):
