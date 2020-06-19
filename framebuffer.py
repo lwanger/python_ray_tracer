@@ -78,28 +78,34 @@ class FrameBuffer():
             return Image.fromarray(self.fb, mode="RGBA")
 
 
-    def set_pixel(self, x, y, value):
+    def set_pixel(self, x, y, value, samples=1):
+        if samples == 1:
+            scaled_value = value
+        else:
+            scale = 1 / samples
+            scaled_value = [v*scale for v in value]
+
         if self.origin == ORIGIN_LL:
             use_y = self.y_size - y - 1
         else:
             use_y = y
 
         if self.depth_num == 1:
-            self.fb[use_y,x] = value
+            self.fb[use_y,x] = scaled_value
         elif self.depth_num == 3:
-            if isinstance(value[0], float):  # convert to int 0..256
-                # self.fb[use_y, x, 0] = int(round(value[2] * 255.999))
-                self.fb[use_y, x, 0] = int(value[0] * 255.999)
-                self.fb[use_y, x, 1] = int(value[1] * 255.999)
-                self.fb[use_y, x, 2] = int(value[2] * 255.999)
+            if isinstance(scaled_value[0], float):  # convert to int 0..256
+                self.fb[use_y, x, 0] = int(scaled_value[0] * 255.999)
+                self.fb[use_y, x, 1] = int(scaled_value[1] * 255.999)
+                self.fb[use_y, x, 2] = int(scaled_value[2] * 255.999)
                 if self.depth_num == 4:
-                    self.fb[use_y, x, 3] = int(value[3] * 255.999)
+                    self.fb[use_y, x, 3] = int(scaled_value[3] * 255.999)
             else:
-                self.fb[use_y, x, 0] = value[0]
-                self.fb[use_y, x, 1] = value[1]
-                self.fb[use_y, x, 2] = value[2]
+                self.fb[use_y, x, 0] = scaled_value[0]
+                self.fb[use_y, x, 1] = scaled_value[1]
+                self.fb[use_y, x, 2] = scaled_value[2]
                 if self.depth_num == 4:
-                    self.fb[use_y, x, 3] = value[3]
+                    self.fb[use_y, x, 3] = scaled_value[3]
+
 
     def get_pixel(self, x, y):
         if self.origin == ORIGIN_LL:

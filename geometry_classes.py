@@ -1,8 +1,9 @@
 """
-Geometry Classes
+Geometry Classes and utility functions
 
-TODO:
-    - create pytest tests for Vec3 and Ray
+based on Pete Shirley's Ray Tracing in a Weekend (https://raytracing.github.io/books/RayTracingInOneWeekend.html)
+Len Wanger, Copyright 2020
+
 """
 
 from abc import ABC, abstractmethod
@@ -39,6 +40,13 @@ def _args2tuple(funcname, args):
 def degrees_to_radians(degrees: float):
     return degrees * math.pi / 180
 
+def clamp(x: float, min: float, max: float) -> float:
+    if x < min:
+        return min
+    elif x > max:
+        return max
+    else:
+        return x
 
 class Vec3(numpy.ndarray):
     def __new__(cls, *args):
@@ -58,7 +66,6 @@ class Vec3(numpy.ndarray):
         return f'({self[0]}, {self[1]}, {self[2]})'
 
     def __mul__(self, other):
-        # return numpy.dot(self, other)
         if isinstance(other, numbers.Number):
             return Vec3(self.x*other, self.y*other, self.z*other)
 
@@ -88,9 +95,6 @@ class Vec3(numpy.ndarray):
     def length(self):
         return math.sqrt(self.x**2 + self.y**2 + self.z**2)
 
-    # def __len__(self):
-    #     return math.sqrt(self.x**2 + self.y**2 + self.z**2)
-
     def squared_length(self):
         return self.x**2 + self.y**2 + self.z**2
 
@@ -116,6 +120,25 @@ def cross(a: Vec3, b: Vec3):
 
 def dot(a: Vec3, b: Vec3):
     return numpy.dot(a, b)
+
+
+class Camera():
+    def __init__(self):
+        aspect_ratio = 16.0 / 9.0
+        viewport_height = 2.0
+        viewport_width = aspect_ratio * viewport_height
+        focal_length = 1.0
+
+        self.origin = Vec3(0, 0, 0)
+        self.horizontal = Vec3(viewport_width, 0, 0)
+        self.vertical = Vec3(0, viewport_height, 0)
+        self.lower_left_corner = self.origin - self.horizontal / 2 - self.vertical / 2 - Vec3(0, 0, focal_length)
+
+    def get_ray(self, u: float, v: float):
+        return Ray(self.origin, self.lower_left_corner + u*self.horizontal + v*self.vertical - self.origin)
+
+    def __repr__(self):
+        return f'Camera(origin={self.origin}, ...)'
 
 
 class Ray():
