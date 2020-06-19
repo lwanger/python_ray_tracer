@@ -15,6 +15,8 @@ from random import uniform
 from typing import Optional
 
 _TINY = 1e-15
+DEFAULT_ASPECT_RATIO = 16.0/9.0
+DEFAULT_FOV = 90.0
 
 
 def _args2tuple(funcname, args):
@@ -158,16 +160,23 @@ def random_in_hemisphere(normal: Vec3) -> Vec3:
         return -in_unit_sphere
 
 class Camera():
-    def __init__(self):
-        aspect_ratio = 16.0 / 9.0
-        viewport_height = 2.0
-        viewport_width = aspect_ratio * viewport_height
-        focal_length = 1.0
+    def __init__(self, look_from: Vec3, look_at: Vec3, vup: Vec3, vert_fov: float=DEFAULT_FOV, aspect_ratio: float=DEFAULT_ASPECT_RATIO):
+        self.origin = look_from
+        self.look_at = look_at
+        self.look_vup = vup
 
-        self.origin = Vec3(0, 0, 0)
-        self.horizontal = Vec3(viewport_width, 0, 0)
-        self.vertical = Vec3(0, viewport_height, 0)
-        self.lower_left_corner = self.origin - self.horizontal / 2 - self.vertical / 2 - Vec3(0, 0, focal_length)
+        w = (look_from - look_at).unit_vector()
+        u = cross(vup, w).unit_vector()
+        v = cross(w, u)
+
+        theta = degrees_to_radians(vert_fov)
+        h = math.tan(theta/2)
+        viewport_height = 2.0 * h
+        viewport_width = aspect_ratio * viewport_height
+
+        self.horizontal = viewport_width * u
+        self.vertical  = viewport_height * v
+        self.lower_left_corner = self.origin - self.horizontal / 2 - self.vertical / 2 - w
 
     def get_ray(self, u: float, v: float):
         return Ray(self.origin, self.lower_left_corner + u*self.horizontal + v*self.vertical - self.origin)
