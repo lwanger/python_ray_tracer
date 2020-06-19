@@ -4,6 +4,7 @@ Frame buffer utilities
 Len Wanger -- 2020
 """
 
+from math import sqrt
 import numpy as np
 from PIL import Image
 
@@ -83,7 +84,7 @@ class FrameBuffer():
             scaled_value = value
         else:
             scale = 1 / samples
-            scaled_value = [v*scale for v in value]
+            scaled_value = [sqrt(v*scale) for v in value]  # sqrt to gamma correct
 
         if self.origin == ORIGIN_LL:
             use_y = self.y_size - y - 1

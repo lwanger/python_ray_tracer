@@ -7,9 +7,11 @@ Len Wanger, Copyright 2020
 """
 
 from abc import ABC, abstractmethod
+from collections import namedtuple
 import numbers
 import numpy
 import math
+from random import uniform
 from typing import Optional
 
 _TINY = 1e-15
@@ -73,22 +75,28 @@ class Vec3(numpy.ndarray):
 
     def get_x(self):
         return self[0]
+
     def set_x(self, v):
         self[0] = v
+
     x = property(get_x, set_x)
     r = property(get_x, set_x)
 
     def get_y(self):
         return self[1]
+
     def set_y(self, v):
         self[1] = v
+
     y = property(get_y, set_y)
     g = property(get_y, set_y)
 
     def get_z(self):
         return self[2]
+
     def set_z(self, v):
         self[2] = v
+
     z = property(get_z, set_z)
     b = property(get_z, set_z)
 
@@ -121,6 +129,33 @@ def cross(a: Vec3, b: Vec3):
 def dot(a: Vec3, b: Vec3):
     return numpy.dot(a, b)
 
+def random_vec3(min: float, max: float) -> Vec3:
+    x = uniform(min, max)
+    y = uniform(min, max)
+    z = uniform(min, max)
+    return Vec3(x, y, z)
+
+def random_unit_vec3() -> Vec3:
+    a = uniform(0, 2*math.pi)
+    z = uniform(-1, 1)
+    r = math.sqrt(1 - z**2)
+    return Vec3(r*math.cos(a), r*math.sin(a), z)
+
+def random_in_unit_sphere() -> Vec3:
+    # pick a point in a unit sphere
+    while True:
+        p = random_vec3(-1, 1)
+        if p.squared_length() < 1:
+            break
+    return p
+
+def random_in_hemisphere(normal: Vec3) -> Vec3:
+    # pick a point in the hemisphere
+    in_unit_sphere = random_in_unit_sphere()
+    if dot(in_unit_sphere, normal) > 0.0:
+        return in_unit_sphere
+    else:
+        return -in_unit_sphere
 
 class Camera():
     def __init__(self):
@@ -155,16 +190,64 @@ class Ray():
         return self.origin + t * self.direction
 
 
+MaterialReturn = namedtuple("MaterialReturn", "more scattered attenuation")
+
+
+class Material(ABC):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return f'Material(name={self.name})'
+
+    @abstractmethod
+    def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
+        pass
+
+
+def reflect(v: Vec3, n: Vec3):
+    return v - 2 * dot(v,n) * n
+
+
+class Lambertian(Material):
+    def __init__(self, color: Vec3):
+        self.albedo = color
+
+    def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
+        scatter_direction = hr.normal + random_unit_vec3()
+        scattered = Ray(hr.point, scatter_direction)
+        attenuation = self.albedo
+        return MaterialReturn(True, scattered, attenuation)
+
+
+class Metal(Material):
+    def __init__(self, color: Vec3, fuzziness:float=1.0):
+        self.albedo = color
+        if fuzziness > 1.0:
+            self.fuzziness = 1.0
+        else:
+            self.fuzziness = fuzziness
+
+    def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
+        unit_vector = ray_in.direction.unit_vector()
+        reflected = reflect(unit_vector, hr.normal)
+        scattered = Ray(hr.point, reflected + self.fuzziness * random_in_unit_sphere())
+        attenuation = self.albedo
+        more = dot(scattered.direction, hr.normal) > 0
+        return MaterialReturn(more, scattered, attenuation)
+
+
 class HitRecord():
 
-    def __init__(self, point: Vec3, normal: Vec3, t: float):
+    def __init__(self, point: Vec3, normal: Vec3, t: float, material: Material):
         self.point = point
         self.normal = normal
         self.t = t
+        self.material = material
         self.front_face = None
 
     def __repr__(self):
-        return f'HitRecord(point={self.point}, normal={self.normal}, t={self.t}, front_face={self.front_face})'
+        return f'HitRecord(point={self.point}, normal={self.normal}, t={self.t}, ...)'
 
     def set_face_normal(self, ray: Ray, outward_normal: Vec3):
         dp = dot(ray.direction, outward_normal)
@@ -178,6 +261,9 @@ class HitRecord():
 
 class Geometry(ABC):
     # abstract base class for hittable geometry
+    def __init__(self, material: Material):
+        self.material = material
+
     @abstractmethod
     def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
         pass
@@ -216,12 +302,13 @@ class GeometryList():
 
 
 class Sphere(Geometry):
-    def __init__(self, center: Vec3, radius: float):
+    def __init__(self, center: Vec3, radius: float, material: Material):
+        super().__init__(material)
         self.center = center
         self.radius = radius
 
     def __repr__(self):
-        return f'Sphere(center={self.center}, radius={self.radius})'
+        return f'Sphere(center={self.center}, radius={self.radius}, material={self.material})'
 
     def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
         hr = None
@@ -234,20 +321,23 @@ class Sphere(Geometry):
         if discriminant > 0:
             root = math.sqrt(discriminant)
             t = (-half_b - root) / a
+            p = None
 
             if t_min < t < t_max:
                 p = ray.at(t)
                 n = (p - self.center) / self.radius
-                hr = HitRecord(point=p, normal=n, t=t)
+                # hr = HitRecord(point=p, normal=n, t=t, material=self.material)
             else:
                 t = (-half_b + root) / a
 
                 if t_min < t < t_max:
                     p = ray.at(t)
                     n = (p - self.center) / self.radius
-                    hr = HitRecord(point=p, normal=n, t=t)
+                    # hr = HitRecord(point=p, normal=n, t=t, material=self.material)
 
-            if hr is not None:
+            # if hr is not None:
+            if p is not None:
+                hr = HitRecord(point=p, normal=n, t=t, material=self.material)
                 outward_normal = Vec3(hr.point - self.center) / self.radius
                 hr.set_face_normal(ray, outward_normal)
 
