@@ -22,15 +22,19 @@ from framebuffer import FrameBuffer, save_image, show_image
 from geometry_classes import Vec3, Ray, Camera, Geometry, GeometryList, Sphere
 from material_classes import Lambertian, Metal, Dielectric
 
-use_res = os.getenv("USE_RES", 2)
+use_res = int(os.getenv("USE_RES", 2))
 image_file = os.getenv("IMAGE_FILE", "image.png")
 
 ASPECT_RATIO = 16.0/9.0
 
-if use_res==1:  # ultra low res for debugging
+if use_res==0:  # ultra low res for debugging
     X_SIZE = 100
     SAMPLES_PER_PIXEL = 1
     MAX_DEPTH = 5
+if use_res==1:  # ultra low res for debugging
+    X_SIZE = 200
+    SAMPLES_PER_PIXEL = 4
+    MAX_DEPTH = 10
 elif use_res==2:  # normal res
     X_SIZE = 384
     SAMPLES_PER_PIXEL = 5

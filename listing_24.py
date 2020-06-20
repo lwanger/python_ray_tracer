@@ -24,19 +24,6 @@ X_SIZE = 384
 Y_SIZE = int(X_SIZE/ASPECT_RATIO)
 
 
-# def hit_sphere(center: Vec3, radius: float, ray: Ray):
-#     oc = Vec3(ray.origin - center)
-#     a = ray.direction.squared_length()
-#     half_b = dot(oc, ray.direction)
-#     c = oc.squared_length() - radius**2
-#     discriminant = half_b**2 - a * c
-#
-#     if discriminant < 0:
-#         return -1.0
-#     else:
-#         return (-half_b - math.sqrt(discriminant)) / a
-
-
 def ray_color(ray: Ray, world: Geometry):
     hr = world.hit(ray, 0, math.inf)
 
