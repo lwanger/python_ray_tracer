@@ -12,7 +12,7 @@ Len Wanger -- 2020
 
 import math
 import os
-from random import random
+from random import random, uniform
 
 import numpy as np
 
@@ -65,6 +65,20 @@ def ray_color(ray: Ray, world: Geometry, depth=1):
     t = 0.5 * (unit_direction.y + 1.0)
     return (1-t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
 
+def create_simple_world():
+    diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
+    diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0))
+    metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3)
+    dielectric_1 = Dielectric(1.5)
+
+    world = GeometryList()
+    world.add(Sphere(Vec3(0,0,-1), 0.5, diffuse_1))
+    world.add(Sphere(Vec3(0,-100.5,-1), 100, diffuse_2))
+    world.add(Sphere(Vec3(1,0,-1), 0.5, metal_1))
+    world.add(Sphere(Vec3(-1,0,-1),0.5, dielectric_1))
+    world.add(Sphere(Vec3(-1,0,-1),-0.45, dielectric_1))  # hollow sphere
+    return world
+
 
 fb = FrameBuffer(X_SIZE, Y_SIZE, np.int8, 'rgb')
 
@@ -75,17 +89,7 @@ vup = Vec3(0,1,0)
 fd = (look_from - look_at).length()
 camera = Camera(look_from, look_at, vup, 20, aperature=2.0, focus_dist=fd)
 
-diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
-diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0))
-metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3)
-dielectric_1 = Dielectric(1.5)
-
-world = GeometryList()
-world.add(Sphere(Vec3(0,0,-1), 0.5, diffuse_1))
-world.add(Sphere(Vec3(0,-100.5,-1), 100, diffuse_2))
-world.add(Sphere(Vec3(1,0,-1), 0.5, metal_1))
-world.add(Sphere(Vec3(-1,0,-1),0.5, dielectric_1))
-world.add(Sphere(Vec3(-1,0,-1),-0.45, dielectric_1))  # hollow sphere
+world = create_simple_world()
 
 # write to framebuffer
 for j in tqdm(range(Y_SIZE), desc="scanlines"):
