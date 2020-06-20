@@ -61,9 +61,9 @@ def ray_color(ray: Ray, world: Geometry, depth=1):
         else:
             return Vec3(0,0,0)
 
-    unit_direction = Vec3(ray.direction).unit_vector()
+    unit_direction = ray.direction.unit_vector()
     t = 0.5 * (unit_direction.y + 1.0)
-    return (1-t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
+    return Vec3(1.0, 1.0, 1.0)*(1-t) + Vec3(0.5, 0.7, 1.0)*t
 
 def create_simple_world():
     diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
@@ -140,7 +140,7 @@ for j in tqdm(range(Y_SIZE), desc="scanlines"):
             ray = camera.get_ray(u, v)
             pixel_color += ray_color(ray, world, MAX_DEPTH)
 
-        fb.set_pixel(i, j, pixel_color, SAMPLES_PER_PIXEL)
+        fb.set_pixel(i, j, pixel_color.get_unscaled_color(), SAMPLES_PER_PIXEL)
 
 img = fb.make_image()
 show_image(img)

@@ -9,7 +9,6 @@ Len Wanger, Copyright 2020
 from abc import ABC, abstractmethod
 from collections import namedtuple
 import numbers
-import numpy
 import math
 from random import uniform
 from typing import Optional
@@ -19,26 +18,6 @@ DEFAULT_ASPECT_RATIO = 16.0/9.0
 DEFAULT_FOV = 90.0
 
 
-def _args2tuple(funcname, args):
-    narg = len(args)
-    if narg == 0:
-        data = 3 * (0,)
-    elif narg == 1:
-        data = args[0]
-        if len(data) != 3:
-            raise TypeError('vec3.%s() takes sequence with 3 elements '
-                            '(%d given),\n\t   when 1 argument is given' %
-                            (funcname, len(data)))
-    elif narg == 3:
-        data = args
-    else:
-        raise TypeError('vec3.%s() takes 0, 1 or 3 arguments (%d given)' %
-                        (funcname, narg))
-    assert len(data) == 3
-    try:
-        return tuple(map(float, data))
-    except (TypeError, ValueError):
-        raise TypeError("vec3.%s() can't convert elements to float" % funcname)
 
 
 def degrees_to_radians(degrees: float):
@@ -52,22 +31,33 @@ def clamp(x: float, min: float, max: float) -> float:
     else:
         return x
 
-class Vec3(numpy.ndarray):
-    def __new__(cls, *args):
-        if len(args) == 1:
-            if isinstance(args[0], Vec3):
-                return args[0].copy()
-            if isinstance(args[0], numpy.matrix):
-                return Vec3(args[0].flatten().tolist()[0])
-        data = _args2tuple('__new__', args)
-        arr = numpy.array(data, dtype=numpy.float, copy=True)
-        return numpy.ndarray.__new__(cls, shape=(3,), buffer=arr)
+
+class Vec3():
+    def __init__(self, x,y,z):
+        self.x = x
+        self.y = y
+        self.z = z
 
     def __repr__(self):
-        return f'Vec3({self[0]}, {self[1]}, {self[2]})'
+        return f'Vec3({self.x}, {self.y}, {self.z})'
 
     def __str__(self):
-        return f'({self[0]}, {self[1]}, {self[2]})'
+        return f'({self.x}, {self.y}, {self.z})'
+
+    def __neg__(self):
+        return Vec3(-self.x, -self.y, -self.z)
+
+    def __add__(self, other):
+        if isinstance(other, numbers.Number):
+            return Vec3(self.x+other, self.y+other, self.z+other)
+
+        return Vec3(self.x+other.x, self.y+other.y, self.z+other.z)
+
+    def __sub__(self, other):
+        if isinstance(other, numbers.Number):
+            return Vec3(self.x-other, self.y-other, self.z-other)
+
+        return Vec3(self.x-other.x, self.y-other.y, self.z-other.z)
 
     def __mul__(self, other):
         if isinstance(other, numbers.Number):
@@ -75,67 +65,72 @@ class Vec3(numpy.ndarray):
 
         return Vec3(self.x*other.x, self.y*other.y, self.z*other.z)
 
+    def __truediv__(self, other):
+        if isinstance(other, numbers.Number):
+            return Vec3(self.x/other, self.y/other, self.z/other)
+
+        return Vec3(self.x/other.x, self.y/other.y, self.z/other.z)
+
     def get_x(self):
-        return self[0]
+        return self.x
 
     def set_x(self, v):
         self[0] = v
 
-    x = property(get_x, set_x)
     r = property(get_x, set_x)
 
     def get_y(self):
-        return self[1]
+        return self.y
 
     def set_y(self, v):
         self[1] = v
 
-    y = property(get_y, set_y)
     g = property(get_y, set_y)
 
     def get_z(self):
-        return self[2]
+        return self.z
 
     def set_z(self, v):
         self[2] = v
 
-    z = property(get_z, set_z)
     b = property(get_z, set_z)
 
     def length(self):
-        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
+        return math.sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
 
     def squared_length(self):
-        return self.x**2 + self.y**2 + self.z**2
+        return self.x*self.x + self.y*self.y + self.z*self.z
 
     def normalize(self):
-        k = 1.0 / math.sqrt(self.x**2 + self.y**2 + self.z**2)
+        k = 1.0 / math.sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
         return Vec3(self.x*k, self.y*k, self.z*k)
 
     def unit_vector(self):
         return self.normalize()
 
-    def dot(self, other):
-        return numpy.dot(self, other)
-
-    def cross(self, v):
-        return Vec3(numpy.cross(self, v))
+    def get_unscaled_color(self):
+        return self.x, self.y, self.z
 
     def get_color(self):
-        return 255.999 * self.r, 255.999 * self.g, 255.999 * self.b
+        return 255.999 * self.x, 255.999 * self.y, 255.999 * self.z
 
+
+def squared_length(v: Vec3):
+    return v.x*v.x + v.y*v.y + v.z*v.z
 
 def cross(a: Vec3, b: Vec3):
-    return Vec3(numpy.cross(a, b))
+    return Vec3(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x)
 
 def dot(a: Vec3, b: Vec3):
-    return numpy.dot(a, b)
+    return a.x*b.x + a.y*b.y + a.z*b.z
+
 
 def random_vec3(min: float, max: float) -> Vec3:
     x = uniform(min, max)
     y = uniform(min, max)
     z = uniform(min, max)
     return Vec3(x, y, z)
+
 
 def random_unit_vec3() -> Vec3:
     a = uniform(0, 2*math.pi)
@@ -191,9 +186,9 @@ class Camera():
             self.lower_left_corner = self.origin - self.horizontal/2 - self.vertical/2 - self.w
             self.lens_radius = aperature / 2
         else:
-            self.horizontal = focus_dist * viewport_width * self.u
-            self.vertical  = focus_dist * viewport_height * self.v
-            self.lower_left_corner = self.origin - self.horizontal/2 - self.vertical/2 - focus_dist*self.w
+            self.horizontal = self.u * viewport_width * focus_dist
+            self.vertical  = self.v * viewport_height * focus_dist
+            self.lower_left_corner = self.origin - self.horizontal/2 - self.vertical/2 - self.w * focus_dist
             self.lens_radius = aperature / 2
 
     def get_ray(self, s: float, t: float):
@@ -201,10 +196,10 @@ class Camera():
             origin = self.origin
             direction = self.lower_left_corner + s*self.horizontal + t*self.vertical - self.origin
         else:
-            rd = self.lens_radius * random_in_unit_disc()
+            rd = random_in_unit_disc() * self.lens_radius
             offset = self.u * rd.x + self.v * rd.y
             origin = self.origin + offset
-            direction = self.lower_left_corner + s*self.horizontal + t*self.vertical - self.origin - offset
+            direction = self.lower_left_corner + self.horizontal*s + self.vertical*t - self.origin - offset
         return Ray(origin, direction)
 
 
@@ -222,8 +217,8 @@ class Ray():
     def __repr__(self):
         return f'Ray(origin={self.origin}, direction={self.direction}, tmin={self.tmin}, tmax={self.tmax})'
 
-    def at(self, t):
-        return self.origin + t * self.direction
+    def at(self, t: float):
+        return self.origin + self.direction * t
 
 
 MaterialReturn = namedtuple("MaterialReturn", "more scattered attenuation")
@@ -342,7 +337,7 @@ class Sphere(Geometry):
             # if hr is not None:
             if p is not None:
                 hr = HitRecord(point=p, normal=n, t=t, material=self.material)
-                outward_normal = Vec3(hr.point - self.center) / self.radius
+                outward_normal = (hr.point - self.center) / self.radius
                 hr.set_face_normal(ray, outward_normal)
 
         return hr
@@ -359,7 +354,6 @@ if __name__ == '__main__':
     print(f'v2 x,y,z={v2.x},{v2.y},{v2.z}')
     print(f'v2 x,y,z={v2.r},{v2.g},{v2.b}')
 
-    v2[0] = 4.1
     print(v2)
     v2.x = 4.0
     print(v2)
@@ -375,10 +369,10 @@ if __name__ == '__main__':
     print(f'v1.length = {v1.length()}')
     print(f'v1.squared_length = {v1.squared_length()}')
 
-    print(f'v1.dot(v2) = {v1.dot(v2)}')
+    print(f'dot(v1,v2) = {dot(v1,v2)}')
     print(f'v1.normalize = {v1.normalize()}')
     print(f'v1.unit_vector = {v1.unit_vector()}')
-    print(f'v1.cross(v2) = {v1.cross(v2)}')
+    print(f'cross(v1,v2) = {cross(v1,v2)}')
 
     print(f'ray1={ray1}, repr={repr(ray1)}')
     print(f'ray1 repr={repr(ray1)}')

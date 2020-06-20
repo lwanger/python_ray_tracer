@@ -20,13 +20,11 @@ ASPECT_RATIO = 16.0/9.0
 X_SIZE = 384
 Y_SIZE = int(X_SIZE/ASPECT_RATIO)
 
-# def LERP(l,h,a):
-#     return (1-a)*l + a*h
 
 def ray_color(ray: Ray):
     unit_dir = ray.direction.unit_vector()
     t = 0.5 * (unit_dir.y + 1.0)
-    return (1.0-t) * Vec3(1.0,1.0,1.0) + t * Vec3(0.5,0.7,1.0)
+    return Vec3(1.0,1.0,1.0)*(1.0-t) + Vec3(0.5,0.7,1.0)*t
 
 # test framebuffer utilities
 fb = FrameBuffer(X_SIZE, Y_SIZE, np.int8, 'rgb')
@@ -48,10 +46,10 @@ for j in tqdm(range(Y_SIZE), desc="scanlines"):
     for i in range(X_SIZE):
         u = i / (X_SIZE-1)
         v = j / (Y_SIZE-1)
-        direction = Vec3(lower_left + u*horizontal + v*vertical -origin)
+        direction = lower_left + horizontal*u + vertical*v -origin
         ray = Ray(origin, direction)
         color = ray_color(ray)
-        fb.set_pixel(i,j,color)
+        fb.set_pixel(i,j,color.get_unscaled_color())
 
 # show framebuffer
 img = fb.make_image()

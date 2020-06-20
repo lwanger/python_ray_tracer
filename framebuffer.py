@@ -84,6 +84,7 @@ class FrameBuffer():
             scaled_value = value
         else:
             scale = 1 / samples
+            # scaled_value = [sqrt(value.x*scale), sqrt(value.y*scale), sqrt(value.z*scale)]  # sqrt to gamma correct
             scaled_value = [sqrt(v*scale) for v in value]  # sqrt to gamma correct
 
         if self.origin == ORIGIN_LL:

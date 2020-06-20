@@ -32,7 +32,7 @@ class Material(ABC):
 
 
 def reflect(v: Vec3, n: Vec3):
-    return v - 2 * dot(v,n) * n
+    return v - n*2*dot(v,n)
 
 
 def schlick(cosine: float, refraction_idx: float):
@@ -43,8 +43,8 @@ def schlick(cosine: float, refraction_idx: float):
 
 def refract(uv: Vec3, n: Vec3, etai_over_etat: float):
     cos_theta = dot(-uv, n)
-    r_out_parallel = etai_over_etat * (uv + cos_theta*n)
-    r_out_perp = -math.sqrt(1.0 - r_out_parallel.squared_length()) * n
+    r_out_parallel = (uv + n*cos_theta) * etai_over_etat
+    r_out_perp = n * (-math.sqrt(1.0 - r_out_parallel.squared_length()))
     return r_out_parallel + r_out_perp
 
 
@@ -70,7 +70,7 @@ class Metal(Material):
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         unit_vector = ray_in.direction.unit_vector()
         reflected = reflect(unit_vector, hr.normal)
-        scattered = Ray(hr.point, reflected + self.fuzziness * random_in_unit_sphere())
+        scattered = Ray(hr.point, reflected + random_in_unit_sphere()*self.fuzziness)
         attenuation = self.albedo
         more = dot(scattered.direction, hr.normal) > 0
         return MaterialReturn(more, scattered, attenuation)
