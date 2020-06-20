@@ -68,11 +68,12 @@ def ray_color(ray: Ray, world: Geometry, depth=1):
 
 fb = FrameBuffer(X_SIZE, Y_SIZE, np.int8, 'rgb')
 
-look_from = Vec3(-2,2,1)
+look_from = Vec3(3,3,2)
 look_at = Vec3(0,0,-1)
 vup = Vec3(0,1,0)
-# camera = Camera(look_from, look_at, vup, 90)
-camera = Camera(look_from, look_at, vup, 20)
+# camera = Camera(look_from, look_at, vup, 20)
+fd = (look_from - look_at).length()
+camera = Camera(look_from, look_at, vup, 20, aperature=2.0, focus_dist=fd)
 
 diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
 diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0))

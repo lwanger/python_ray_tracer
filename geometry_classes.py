@@ -159,27 +159,54 @@ def random_in_hemisphere(normal: Vec3) -> Vec3:
     else:
         return -in_unit_sphere
 
+def random_in_unit_disc() -> Vec3:
+    # pick a point in a unit disc
+    while True:
+        p = Vec3(uniform(-1, 1), uniform(-1, 1), 0)
+        if p.squared_length() < 1:
+            break
+    return p
+
+
 class Camera():
-    def __init__(self, look_from: Vec3, look_at: Vec3, vup: Vec3, vert_fov: float=DEFAULT_FOV, aspect_ratio: float=DEFAULT_ASPECT_RATIO):
+    def __init__(self, look_from: Vec3, look_at: Vec3, vup: Vec3, vert_fov: float=DEFAULT_FOV,
+                 # aspect_ratio: float=DEFAULT_ASPECT_RATIO, aperature:float=0.0, focus_dist:float=10):
+                 aspect_ratio: float=DEFAULT_ASPECT_RATIO, aperature:float=0.0, focus_dist:float=math.inf):
         self.origin = look_from
         self.look_at = look_at
         self.look_vup = vup
 
-        w = (look_from - look_at).unit_vector()
-        u = cross(vup, w).unit_vector()
-        v = cross(w, u)
+        self.w = (look_from - look_at).unit_vector()
+        self.u = cross(vup, self.w).unit_vector()
+        self.v = cross(self.w, self.u)
 
         theta = degrees_to_radians(vert_fov)
         h = math.tan(theta/2)
         viewport_height = 2.0 * h
         viewport_width = aspect_ratio * viewport_height
 
-        self.horizontal = viewport_width * u
-        self.vertical  = viewport_height * v
-        self.lower_left_corner = self.origin - self.horizontal / 2 - self.vertical / 2 - w
+        if focus_dist == math.inf:
+            self.horizontal = viewport_width * self.u
+            self.vertical = viewport_height * self.v
+            self.lower_left_corner = self.origin - self.horizontal/2 - self.vertical/2 - self.w
+            self.lens_radius = aperature / 2
+        else:
+            self.horizontal = focus_dist * viewport_width * self.u
+            self.vertical  = focus_dist * viewport_height * self.v
+            self.lower_left_corner = self.origin - self.horizontal/2 - self.vertical/2 - focus_dist*self.w
+            self.lens_radius = aperature / 2
 
-    def get_ray(self, u: float, v: float):
-        return Ray(self.origin, self.lower_left_corner + u*self.horizontal + v*self.vertical - self.origin)
+    def get_ray(self, s: float, t: float):
+        if self.lens_radius < 0.01:
+            origin = self.origin
+            direction = self.lower_left_corner + s*self.horizontal + t*self.vertical - self.origin
+        else:
+            rd = self.lens_radius * random_in_unit_disc()
+            offset = self.u * rd.x + self.v * rd.y
+            origin = self.origin + offset
+            direction = self.lower_left_corner + s*self.horizontal + t*self.vertical - self.origin - offset
+        return Ray(origin, direction)
+
 
     def __repr__(self):
         return f'Camera(origin={self.origin}, ...)'
