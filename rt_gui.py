@@ -2,12 +2,14 @@
 GUI on top of the ray tracer
 
 TODO:
+    - port to weekend_final_pic
     - canvas blanking after complete?
     - update canvas paste a chunk
     - get basic GUI working
     - add import create_world
     - add settings (image_name, size, aspect ratio, chunk size, # of worked, samples_per_pixel, max depth)
     - add multi-processing
+    - why canvas bigger than rendering in X?
 
 Len Wanger, copyright 2020
 """
@@ -21,11 +23,9 @@ from PIL import Image, ImageTk
 from framebuffer import FrameBuffer, save_image, show_image
 from geometry_classes import Vec3, Ray
 
-# ASPECT_RATIO = 16.0/9.0
-X_SIZE = 384
-# Y_SIZE = int(X_SIZE/ASPECT_RATIO)
-CHUNK_SIZE = 100
 
+X_SIZE = 384
+CHUNK_SIZE = 100
 
 # messages from GUI
 CANCEL_MSG = 100
@@ -37,7 +37,8 @@ COMPLETED_MSG = 201
 CANCELLED_MSG = 202
 CHUNK_RESULT_MSG = 203
 
-class RENDER_CANCELLED(BaseException):
+
+class RenderCanceledException(BaseException):
     # Exception raised when the calculation process is cancelled
     pass
 
@@ -73,7 +74,7 @@ def render_worker(start, end, pipe_conn):
         #
         # send_gui_message(pipe_conn, COMPLETED_MSG, primes_in_range)
         pass
-    except RENDER_CANCELLED:
+    except RenderCanceledException:
         # send_gui_message(pipe_conn, CANCELLED_MSG, None)
         pass
 
@@ -84,27 +85,6 @@ def ray_color(ray: Ray):
     unit_dir = ray.direction.unit_vector()
     t = 0.5 * (unit_dir.y + 1.0)
     return Vec3(1.0,1.0,1.0)*(1.0-t) + Vec3(0.5,0.7,1.0)*t
-
-
-# viewport_height = 2.0
-# viewport_width = ASPECT_RATIO * viewport_height
-# focal_length = 1.0
-#
-# origin = Vec3(0.0, 0.0, 0.0)
-# horizontal = Vec3(viewport_width, 0, 0)
-# vertical = Vec3(0, viewport_height, 0)
-# lower_left = origin - horizontal/2 - vertical/2 - Vec3(0, 0, focal_length)
-
-# from tqdm import tqdm
-
-# write to framebuffer
-
-# show framebuffer
-# img = fb.make_image()
-# show_image(img)
-# save_image(img, "listing_9.png")
-
-###
 
 
 class App(tk.Frame):
@@ -130,6 +110,7 @@ class App(tk.Frame):
         self.start_button_start = True  # False, means it's changed to cancel button
         self.image_saved = False
         self.fb = None
+        self.render_cancelled = False
 
 
     def create_gui(self):
@@ -155,15 +136,12 @@ class App(tk.Frame):
         self.canvas.grid(row=0, column=0, columnspan=3, sticky="nsew")
 
         self.start_button = tk.Button(self.root, text="Start", command=self.start_cmd)
-        # self.start_button.grid(row=1, column=2, sticky="nsew", padx=10, pady=10)
         self.start_button.grid(row=1, column=2, sticky="nse", padx=5, pady=5)
 
         self.quit_button = tk.Button(self.root, text="Quit", command=self.quit_cmd)
-        # self.quit_button.grid(row=2, column=2, sticky="nsew", padx=10, pady=10)
         self.quit_button.grid(row=2, column=2, sticky="nse", padx=5, pady=5)
 
         self.status_label = tk.Label(self.root, textvariable=self.status_str, width=50)
-        # self.status_label.grid(row=1, column=0, sticky="new", columnspan=2, padx=10)
         self.status_label.grid(row=1, column=0, sticky="new", columnspan=2, padx=5)
 
         self.status_label2 = tk.Label(self.root, textvariable=self.status_str2, width=50)
@@ -187,7 +165,7 @@ class App(tk.Frame):
         #     self.worker.join(60)
 
         if self.fb is not None and self.image_saved is False:
-            print(f'Prompt to save image...')
+            # print(f'Prompt to save image...')
             self.save_image()
 
         self.root.destroy()
@@ -253,6 +231,7 @@ class App(tk.Frame):
 
     def start_render(self):
         self.create_frame_buffer()
+        self.render_cancelled = False
         self.status_str.set(f'render started')
         self.status_str2.set('')
         self.start_button['text'] = "Cancel"
@@ -274,6 +253,7 @@ class App(tk.Frame):
 
     def cancel_render(self):
         self.status_str.set(f'render cancelled')
+        self.render_cancelled = True
         self.status_str2.set('')
         self.start_button['text'] = "Start"
         self.start_button_start = True
@@ -281,7 +261,8 @@ class App(tk.Frame):
 
 
     def start_cmd(self):
-        print(f'start_cmd called...')
+        # print(f'start_cmd called...')
+        self.render_cancelled = False
         if self.start_button_start is True:  # start
             self.start_render()
         else:  # cancel
@@ -318,6 +299,9 @@ class App(tk.Frame):
 
         for j in range(b, use_t):
             for i in range(l, use_r):
+                if self.render_cancelled is True:
+                    raise RenderCanceledException
+
                 u = i / (self.x_size - 1)
                 v = j / (self.y_size - 1)
                 direction = self.lower_left + self.horizontal * u + self.vertical * v - self.origin
@@ -338,19 +322,23 @@ class App(tk.Frame):
         total_chunks = x_chunks * y_chunks
         chunk_num = 1
 
-        for j in range(y_chunks):
-            for i in range(x_chunks):
-                l = i*self.chunk_size
-                r = l + self.chunk_size
-                b = j*self.chunk_size
-                t = b + self.chunk_size
-                self.render_chunk(l, b, r, t)
-                # self.update_canvas(chunk_num, total_chunks)
-                self.update_canvas(l, b, chunk_num, total_chunks)
-                chunk_num += 1
-                # self.update()
+        try:
 
-        self.finish_render()
+            for j in range(y_chunks):
+                for i in range(x_chunks):
+                    l = i*self.chunk_size
+                    r = l + self.chunk_size
+                    b = j*self.chunk_size
+                    t = b + self.chunk_size
+                    self.render_chunk(l, b, r, t)
+                    # self.update_canvas(chunk_num, total_chunks)
+                    self.update_canvas(l, b, chunk_num, total_chunks)
+                    chunk_num += 1
+                    # self.update()
+
+            self.finish_render()
+        except RenderCanceledException:
+            self.cancel_render()
 
 
 if __name__ == '__main__':
