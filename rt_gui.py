@@ -2,7 +2,6 @@
 GUI on top of the ray tracer
 
 TODO:
-    - serve up random chunks
     - update canvas paste a chunk
     - asyncio?
     - add import create_world
@@ -17,7 +16,7 @@ from multiprocessing import Process, Pipe
 
 from datetime import datetime
 import numpy as np
-from random import random, uniform
+from random import random, uniform, shuffle
 import tkinter as tk
 from PIL import Image, ImageTk
 
@@ -29,6 +28,7 @@ from weekend_final_pic import Camera, ray_color, create_random_world, create_sim
 X_SIZE = 384
 CHUNK_SIZE = 100
 CHUNK_SIZE = 10
+RANDOM_CHUNKS = True
 
 # SAMPLES_PER_PIXEL = 100
 # SAMPLES_PER_PIXEL = 50
@@ -382,15 +382,26 @@ class App(tk.Frame):
         chunk_num = 1
 
         try:
-            for j in range(y_chunks):
-                for i in range(x_chunks):
-                    l = i*self.chunk_size
+            if RANDOM_CHUNKS is True:
+                chunk_list = [ (i*self.chunk_size, j*self.chunk_size) for j in range(y_chunks) for i in range(x_chunks)]
+                shuffle(chunk_list)
+
+                for l,b in chunk_list:
                     r = l + self.chunk_size
-                    b = j*self.chunk_size
                     t = b + self.chunk_size
                     self.render_chunk(l, b, r, t)
                     self.update_canvas(l, b, chunk_num, total_chunks)
                     chunk_num += 1
+            else:
+                for j in range(y_chunks):
+                    for i in range(x_chunks):
+                        l = i*self.chunk_size
+                        r = l + self.chunk_size
+                        b = j*self.chunk_size
+                        t = b + self.chunk_size
+                        self.render_chunk(l, b, r, t)
+                        self.update_canvas(l, b, chunk_num, total_chunks)
+                        chunk_num += 1
 
             end_time = datetime.now()
             elapsed_time = end_time - start_time
