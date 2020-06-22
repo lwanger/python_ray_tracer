@@ -2,12 +2,11 @@
 GUI on top of the ray tracer
 
 TODO:
-    - port to weekend_final_pic
-    - canvas blanking after complete?
+    - serve up random chunks
     - update canvas paste a chunk
-    - get basic GUI working
+    - asyncio?
     - add import create_world
-    - add settings (image_name, size, aspect ratio, chunk size, # of worked, samples_per_pixel, max depth)
+    - add settings dialog (image_name, size, aspect ratio, chunk size, # of worked, samples_per_pixel, max depth)
     - add multi-processing
     - why canvas bigger than rendering in X?
 
@@ -16,16 +15,27 @@ Len Wanger, copyright 2020
 
 from multiprocessing import Process, Pipe
 
+from datetime import datetime
 import numpy as np
+from random import random, uniform
 import tkinter as tk
 from PIL import Image, ImageTk
 
 from framebuffer import FrameBuffer, save_image, show_image
 from geometry_classes import Vec3, Ray
 
+from weekend_final_pic import Camera, ray_color, create_random_world, create_simple_world
 
 X_SIZE = 384
 CHUNK_SIZE = 100
+CHUNK_SIZE = 10
+
+# SAMPLES_PER_PIXEL = 100
+# SAMPLES_PER_PIXEL = 50
+SAMPLES_PER_PIXEL = 10
+# MAX_DEPTH = 50
+MAX_DEPTH = 25
+FOV = 20
 
 # messages from GUI
 CANCEL_MSG = 100
@@ -81,10 +91,10 @@ def render_worker(start, end, pipe_conn):
 ###
 
 
-def ray_color(ray: Ray):
-    unit_dir = ray.direction.unit_vector()
-    t = 0.5 * (unit_dir.y + 1.0)
-    return Vec3(1.0,1.0,1.0)*(1.0-t) + Vec3(0.5,0.7,1.0)*t
+# def ray_color(ray: Ray):
+#     unit_dir = ray.direction.unit_vector()
+#     t = 0.5 * (unit_dir.y + 1.0)
+#     return Vec3(1.0,1.0,1.0)*(1.0-t) + Vec3(0.5,0.7,1.0)*t
 
 
 class App(tk.Frame):
@@ -92,14 +102,26 @@ class App(tk.Frame):
         # self.gui_pipe_conn, self.worker_pipe_conn = Pipe()
         # self.worker = None
 
+        self.world_creator = create_simple_world
+
         aspect_ratio = 16.0 / 9.0
         self.x_size = X_SIZE
         self.y_size = int(X_SIZE / aspect_ratio)
+
+        self.samples_per_pixel = SAMPLES_PER_PIXEL
+        self.max_depth = MAX_DEPTH
 
         viewport_height = 2.0
         viewport_width = aspect_ratio * viewport_height
         focal_length = 1.0
         self.chunk_size = CHUNK_SIZE
+
+        self.look_from = Vec3(13, 2, 3)
+        self.look_at = Vec3(0, 0, 0)
+        self.vup = Vec3(0, 1, 0)
+        self.fd = 10.0
+        self.aperature = 0.1
+        self.fov = 20
 
         self.origin = Vec3(0.0, 0.0, 0.0)
         self.horizontal = Vec3(viewport_width, 0, 0)
@@ -149,6 +171,7 @@ class App(tk.Frame):
 
 
     def create_frame_buffer(self):
+        # print(f'create_frame_buffer called')
         self.fb = FrameBuffer(X_SIZE, self.y_size, np.int8, 'rgb')
         # self.pil_image = Image.new(mode="RGB", size=(X_SIZE, Y_SIZE), color=(128,128,128))
         # self.image = ImageTk.PhotoImage(self.pil_image)
@@ -195,6 +218,8 @@ class App(tk.Frame):
 
     def process_worker_msgs(self):
         # Check every 100 ms if thread is done and process any messages in the queue.
+        # print(f'process_worker_msgs called...')
+
         while True:
             break
             response = self.receive_worker_message()
@@ -225,11 +250,15 @@ class App(tk.Frame):
 
 
     def update_worker_progress(self):
+        # print(f'update_worker_progress called...')
         # Check every 500 ms ask for update of worker progress
         self.send_worker_message(SEND_PROGRESS_MSG)
         self.root.after(500, self.update_worker_progress)
 
     def start_render(self):
+        # print(f'start_render called...')
+        self.camera = Camera(self.look_from, self.look_at, self.vup, self.fov, aperature=self.aperature, focus_dist=self.fd)
+        self.world = self.world_creator()
         self.create_frame_buffer()
         self.render_cancelled = False
         self.status_str.set(f'render started')
@@ -237,21 +266,40 @@ class App(tk.Frame):
         self.start_button['text'] = "Cancel"
         self.start_button_start = False
         self.quit_button['state'] = "disabled"
+        self.root.update_idletasks()
         self.render()
         self.quit_button['state'] = "normal"
 
 
-    def finish_render(self):
+    def finish_render(self, elapsed_time):
+        # print(f'finish_render called...')
+        ts = elapsed_time.total_seconds()
+
+        if ts < 60:
+            time_str = f'rendering time: {ts:.2f} seconds'
+        elif ts < 3600:  # < 1 hr
+            m, s = divmod(ts, 60)
+            time_str = f'rendering time: {m} minutes, {s:.2f} seconds'
+        else:  # hours
+            h, m = divmod(ts, 3600)
+            m, s = divmod(m, 60)
+            time_str = f'rendering time: {h} hours, {m} minutes, {s:.2f} seconds'
+
         im = self.fb.make_image()
         save_image(im, "rt_gui.png")
         self.status_str.set(f'render completed')
-        self.status_str2.set('')
+        self.status_str2.set(f'{time_str}')
         self.start_button['text'] = "Start"
         self.start_button_start = True
         self.quit_button['state'] = "normal"
 
+        # self.pil_image = Image.new(mode="RGB", size=(X_SIZE, Y_SIZE), color=(128,128,128))
+        # image = ImageTk.PhotoImage(im)
+        # self.canvas.create_image(self.x_size, self.y_size, image=image)
+
 
     def cancel_render(self):
+        # print(f'cancel_render called...')
         self.status_str.set(f'render cancelled')
         self.render_cancelled = True
         self.status_str2.set('')
@@ -268,6 +316,8 @@ class App(tk.Frame):
         else:  # cancel
             self.cancel_render()
 
+        # self.update_canvas(0, 0, None, None)
+
         # self.root.update_idletasks()  # required to get the label to update
 
         # args = (start, end, self.worker_pipe_conn)
@@ -279,14 +329,19 @@ class App(tk.Frame):
     # def rgb_to_canvas_color(self, color):
     #     return f'{color[0]:02x}{color[1]:02x}{color[2]:02x}'
 
-    # def update_canvas(self, y):
     def update_canvas(self, l: int, b: int, chunk_num: int, total_chunks: int):
+        # print(f'update_canvas -- l={l}, b={b}, cn={chunk_num}, tc={total_chunks}')
         shape = self.fb.fb.shape
-        im = Image.frombytes("RGB", (shape[1],shape[0]), self.fb.fb.astype('b').tostring())
-        photo = ImageTk.PhotoImage(image=im)
-        self.canvas.create_image(0,0,image=photo,anchor=tk.NW)
+        # im = Image.frombytes("RGB", (shape[1],shape[0]), self.fb.fb.astype('b').tostring())
+        self.im = Image.frombytes("RGB", (shape[1],shape[0]), self.fb.fb.astype('b').tostring())
+        # photo = ImageTk.PhotoImage(image=im)
+        self.photo = ImageTk.PhotoImage(image=self.im)
+        # self.canvas.create_image(0,0,image=photo,anchor=tk.NW)
+        self.canvas.create_image(0,0,image=self.photo,anchor=tk.NW)
         # self.status_str2.set(f'rendered scanline {y}')
-        self.status_str2.set(f'rendered chunk {chunk_num} / {total_chunks}')
+        if chunk_num is not None:
+            self.status_str2.set(f'rendered chunk {chunk_num} / {total_chunks}')
+
         self.canvas.update()
         # self.root.update()
         self.root.update_idletasks()
@@ -299,18 +354,22 @@ class App(tk.Frame):
 
         for j in range(b, use_t):
             for i in range(l, use_r):
-                if self.render_cancelled is True:
-                    raise RenderCanceledException
+                pixel_color = Vec3(0, 0, 0)
 
-                u = i / (self.x_size - 1)
-                v = j / (self.y_size - 1)
-                direction = self.lower_left + self.horizontal * u + self.vertical * v - self.origin
-                ray = Ray(self.origin, direction)
-                color = ray_color(ray)
-                self.fb.set_pixel(i, j, color.get_unscaled_color())
+                for s in range(self.samples_per_pixel):
+                    if self.render_cancelled is True:
+                        raise RenderCanceledException
+
+                    u = (i + random()) / (self.x_size - 1)
+                    v = (j + random()) / (self.y_size - 1)
+                    ray = self.camera.get_ray(u, v)
+                    pixel_color += ray_color(ray, self.world, self.max_depth)
+
+                self.fb.set_pixel(i, j, pixel_color.get_unscaled_color(), self.samples_per_pixel)
 
 
     def render(self):
+        start_time = datetime.now()
         x_chunks, r = divmod(self.x_size, self.chunk_size)
         if r != 0:
             x_chunks += 1
@@ -323,7 +382,6 @@ class App(tk.Frame):
         chunk_num = 1
 
         try:
-
             for j in range(y_chunks):
                 for i in range(x_chunks):
                     l = i*self.chunk_size
@@ -331,12 +389,12 @@ class App(tk.Frame):
                     b = j*self.chunk_size
                     t = b + self.chunk_size
                     self.render_chunk(l, b, r, t)
-                    # self.update_canvas(chunk_num, total_chunks)
                     self.update_canvas(l, b, chunk_num, total_chunks)
                     chunk_num += 1
-                    # self.update()
 
-            self.finish_render()
+            end_time = datetime.now()
+            elapsed_time = end_time - start_time
+            self.finish_render(elapsed_time)
         except RenderCanceledException:
             self.cancel_render()
 

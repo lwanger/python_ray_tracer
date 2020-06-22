@@ -22,31 +22,6 @@ from framebuffer import FrameBuffer, save_image, show_image
 from geometry_classes import Vec3, Ray, Camera, Geometry, GeometryList, Sphere
 from material_classes import Lambertian, Metal, Dielectric
 
-use_res = int(os.getenv("USE_RES", 2))
-image_file = os.getenv("IMAGE_FILE", "image.png")
-
-ASPECT_RATIO = 16.0/9.0
-
-if use_res==0:  # ultra low res for debugging
-    X_SIZE = 100
-    SAMPLES_PER_PIXEL = 1
-    MAX_DEPTH = 5
-elif use_res==1:  # ultra low res for debugging
-    X_SIZE = 200
-    SAMPLES_PER_PIXEL = 4
-    MAX_DEPTH = 10
-elif use_res==2:  # normal res
-    X_SIZE = 384
-    SAMPLES_PER_PIXEL = 5
-    MAX_DEPTH = 25
-else:  # ultra high res
-    X_SIZE = 1024
-    SAMPLES_PER_PIXEL = 100
-    MAX_DEPTH = 50
-
-Y_SIZE = int(X_SIZE/ASPECT_RATIO)
-
-print(f'image_file={image_file}, use_res={use_res}: x_size={X_SIZE}, y_size={Y_SIZE}, samples_per_pixel={SAMPLES_PER_PIXEL}, max_depth={MAX_DEPTH}')
 
 def ray_color(ray: Ray, world: Geometry, depth=1):
     if depth < 1:
@@ -118,30 +93,58 @@ def create_random_world():
     return world
 
 
-fb = FrameBuffer(X_SIZE, Y_SIZE, np.int8, 'rgb')
+if __name__ == '__main__':
+    use_res = int(os.getenv("USE_RES", 2))
+    image_file = os.getenv("IMAGE_FILE", "image.png")
 
-look_from = Vec3(13,2,3)
-look_at = Vec3(0,0,0)
-vup = Vec3(0,1,0)
-fd = 10.0
-aperature = 0.1
-camera = Camera(look_from, look_at, vup, 20, aperature=aperature, focus_dist=fd)
+    ASPECT_RATIO = 16.0 / 9.0
 
-world = create_random_world()
+    if use_res == 0:  # ultra low res for debugging
+        X_SIZE = 100
+        SAMPLES_PER_PIXEL = 1
+        MAX_DEPTH = 5
+    elif use_res == 1:  # ultra low res for debugging
+        X_SIZE = 200
+        SAMPLES_PER_PIXEL = 4
+        MAX_DEPTH = 10
+    elif use_res == 2:  # normal res
+        X_SIZE = 384
+        SAMPLES_PER_PIXEL = 5
+        MAX_DEPTH = 25
+    else:  # ultra high res
+        X_SIZE = 1024
+        SAMPLES_PER_PIXEL = 100
+        MAX_DEPTH = 50
 
-# write to framebuffer
-for j in tqdm(range(Y_SIZE), desc="scanlines"):
-    for i in range(X_SIZE):
-        pixel_color = Vec3(0, 0, 0)
+    Y_SIZE = int(X_SIZE / ASPECT_RATIO)
 
-        for s in range(SAMPLES_PER_PIXEL):
-            u = (i + random()) / (X_SIZE-1)
-            v = (j + random()) / (Y_SIZE-1)
-            ray = camera.get_ray(u, v)
-            pixel_color += ray_color(ray, world, MAX_DEPTH)
+    print(
+        f'image_file={image_file}, use_res={use_res}: x_size={X_SIZE}, y_size={Y_SIZE}, samples_per_pixel={SAMPLES_PER_PIXEL}, max_depth={MAX_DEPTH}')
 
-        fb.set_pixel(i, j, pixel_color.get_unscaled_color(), SAMPLES_PER_PIXEL)
+    fb = FrameBuffer(X_SIZE, Y_SIZE, np.int8, 'rgb')
 
-img = fb.make_image()
-show_image(img)
-save_image(img, image_file)
+    look_from = Vec3(13,2,3)
+    look_at = Vec3(0,0,0)
+    vup = Vec3(0,1,0)
+    fd = 10.0
+    aperature = 0.1
+    camera = Camera(look_from, look_at, vup, 20, aperature=aperature, focus_dist=fd)
+
+    world = create_random_world()
+
+    # write to framebuffer
+    for j in tqdm(range(Y_SIZE), desc="scanlines"):
+        for i in range(X_SIZE):
+            pixel_color = Vec3(0, 0, 0)
+
+            for s in range(SAMPLES_PER_PIXEL):
+                u = (i + random()) / (X_SIZE-1)
+                v = (j + random()) / (Y_SIZE-1)
+                ray = camera.get_ray(u, v)
+                pixel_color += ray_color(ray, world, MAX_DEPTH)
+
+            fb.set_pixel(i, j, pixel_color.get_unscaled_color(), SAMPLES_PER_PIXEL)
+
+    img = fb.make_image()
+    show_image(img)
+    save_image(img, image_file)
