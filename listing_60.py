@@ -63,7 +63,8 @@ def ray_color(ray: Ray, world: Geometry, depth=1):
 
     unit_direction = ray.direction.unit_vector()
     t = 0.5 * (unit_direction.y + 1.0)
-    return Vec3(1.0, 1.0, 1.0)*(1-t) + Vec3(0.5, 0.7, 1.0)*t
+    # return Vec3(1.0, 1.0, 1.0)*(1-t) + Vec3(0.5, 0.7, 1.0)*t
+    return Vec3(1.0, 1.0, 1.0).mul_val(1-t) + Vec3(0.5, 0.7, 1.0).mul_val(t)
 
 def create_simple_world():
     diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))

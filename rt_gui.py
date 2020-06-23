@@ -26,8 +26,10 @@ from geometry_classes import Vec3, Ray
 from weekend_final_pic import Camera, ray_color, create_random_world, create_simple_world
 
 X_SIZE = 384
-CHUNK_SIZE = 100
+X_SIZE = 100
+# CHUNK_SIZE = 100
 CHUNK_SIZE = 10
+# CHUNK_SIZE = 5
 RANDOM_CHUNKS = True
 
 # SAMPLES_PER_PIXEL = 100
@@ -102,7 +104,8 @@ class App(tk.Frame):
         # self.gui_pipe_conn, self.worker_pipe_conn = Pipe()
         # self.worker = None
 
-        self.world_creator = create_simple_world
+        # self.world_creator = create_simple_world
+        self.world_creator = create_random_world
 
         aspect_ratio = 16.0 / 9.0
         self.x_size = X_SIZE
@@ -126,7 +129,7 @@ class App(tk.Frame):
         self.origin = Vec3(0.0, 0.0, 0.0)
         self.horizontal = Vec3(viewport_width, 0, 0)
         self.vertical = Vec3(0, viewport_height, 0)
-        self.lower_left = self.origin - self.horizontal / 2 - self.vertical / 2 - Vec3(0, 0, focal_length)
+        self.lower_left = self.origin - self.horizontal.div_val(2) - self.vertical.div_val(2) - Vec3(0, 0, focal_length)
 
         self.create_gui()
         self.start_button_start = True  # False, means it's changed to cancel button
@@ -257,7 +260,13 @@ class App(tk.Frame):
 
     def start_render(self):
         # print(f'start_render called...')
+        self.status_str.set(f'start_render called')
+        self.root.update_idletasks()
+
         self.camera = Camera(self.look_from, self.look_at, self.vup, self.fov, aperature=self.aperature, focus_dist=self.fd)
+        self.status_str.set(f'creating world...')
+        self.root.update_idletasks()
+
         self.world = self.world_creator()
         self.create_frame_buffer()
         self.render_cancelled = False

@@ -24,7 +24,8 @@ Y_SIZE = int(X_SIZE/ASPECT_RATIO)
 def ray_color(ray: Ray):
     unit_dir = ray.direction.unit_vector()
     t = 0.5 * (unit_dir.y + 1.0)
-    return Vec3(1.0,1.0,1.0)*(1.0-t) + Vec3(0.5,0.7,1.0)*t
+    # return Vec3(1.0,1.0,1.0)*(1.0-t) + Vec3(0.5,0.7,1.0)*t
+    return Vec3(1.0,1.0,1.0).mul_val(1.0-t) + Vec3(0.5,0.7,1.0).mul_val(t)
 
 # test framebuffer utilities
 fb = FrameBuffer(X_SIZE, Y_SIZE, np.int8, 'rgb')
@@ -37,7 +38,8 @@ focal_length = 1.0
 origin = Vec3(0.0, 0.0, 0.0)
 horizontal = Vec3(viewport_width, 0, 0)
 vertical = Vec3(0, viewport_height, 0)
-lower_left = origin - horizontal/2 - vertical/2 - Vec3(0, 0, focal_length)
+# lower_left = origin - horizontal/2 - vertical/2 - Vec3(0, 0, focal_length)
+lower_left = origin - horizontal.div_val(2) - vertical.div_val(2) - Vec3(0, 0, focal_length)
 
 from tqdm import tqdm
 
@@ -46,7 +48,8 @@ for j in tqdm(range(Y_SIZE), desc="scanlines"):
     for i in range(X_SIZE):
         u = i / (X_SIZE-1)
         v = j / (Y_SIZE-1)
-        direction = lower_left + horizontal*u + vertical*v -origin
+        # direction = lower_left + horizontal*u + vertical*v -origin
+        direction = lower_left + horizontal.mul_val(u) + vertical.mul_val(v) -origin
         ray = Ray(origin, direction)
         color = ray_color(ray)
         fb.set_pixel(i,j,color.get_unscaled_color())

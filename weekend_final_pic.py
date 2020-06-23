@@ -16,8 +16,6 @@ from random import random, uniform
 
 import numpy as np
 
-from tqdm import tqdm
-
 from framebuffer import FrameBuffer, save_image, show_image
 from geometry_classes import Vec3, Ray, Camera, Geometry, GeometryList, Sphere
 from material_classes import Lambertian, Metal, Dielectric
@@ -38,7 +36,8 @@ def ray_color(ray: Ray, world: Geometry, depth=1):
 
     unit_direction = ray.direction.unit_vector()
     t = 0.5 * (unit_direction.y + 1.0)
-    return Vec3(1.0, 1.0, 1.0)*(1-t) + Vec3(0.5, 0.7, 1.0)*t
+    # return Vec3(1.0, 1.0, 1.0)*(1-t) + Vec3(0.5, 0.7, 1.0)*t
+    return Vec3(1.0, 1.0, 1.0).mul_val(1-t) + Vec3(0.5, 0.7, 1.0).mul_val(t)
 
 def create_simple_world():
     diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
@@ -94,6 +93,8 @@ def create_random_world():
 
 
 if __name__ == '__main__':
+    from tqdm import tqdm
+
     use_res = int(os.getenv("USE_RES", 2))
     image_file = os.getenv("IMAGE_FILE", "image.png")
 

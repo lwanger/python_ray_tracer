@@ -4,11 +4,12 @@ Geometry Classes and utility functions
 based on Pete Shirley's Ray Tracing in a Weekend (https://raytracing.github.io/books/RayTracingInOneWeekend.html)
 Len Wanger, Copyright 2020
 
+removed isinstance calls from Vec3 dunder methods (was very slow!)
+
 """
 
 from abc import ABC, abstractmethod
 from collections import namedtuple
-import numbers
 import math
 from random import uniform
 from typing import Optional
@@ -16,8 +17,6 @@ from typing import Optional
 _TINY = 1e-15
 DEFAULT_ASPECT_RATIO = 16.0/9.0
 DEFAULT_FOV = 90.0
-
-
 
 
 def degrees_to_radians(degrees: float):
@@ -48,28 +47,36 @@ class Vec3():
         return Vec3(-self.x, -self.y, -self.z)
 
     def __add__(self, other):
-        if isinstance(other, numbers.Number):
-            return Vec3(self.x+other, self.y+other, self.z+other)
-
+        # if isinstance(other, numbers.Number):
+        #     return Vec3(self.x+other, self.y+other, self.z+other)
         return Vec3(self.x+other.x, self.y+other.y, self.z+other.z)
 
-    def __sub__(self, other):
-        if isinstance(other, numbers.Number):
-            return Vec3(self.x-other, self.y-other, self.z-other)
+    def add_val(self, value):
+        return Vec3(self.x+value, self.y+value, self.z+value)
 
+    def __sub__(self, other):
+        # if isinstance(other, numbers.Number):
+        #     return Vec3(self.x-other, self.y-other, self.z-other)
         return Vec3(self.x-other.x, self.y-other.y, self.z-other.z)
 
-    def __mul__(self, other):
-        if isinstance(other, numbers.Number):
-            return Vec3(self.x*other, self.y*other, self.z*other)
+    def sub_val(self, value):
+        return Vec3(self.x-value, self.y-value, self.z-value)
 
+    def __mul__(self, other):
+        # if isinstance(other, numbers.Number):
+        #     return Vec3(self.x*other, self.y*other, self.z*other)
         return Vec3(self.x*other.x, self.y*other.y, self.z*other.z)
 
-    def __truediv__(self, other):
-        if isinstance(other, numbers.Number):
-            return Vec3(self.x/other, self.y/other, self.z/other)
+    def mul_val(self, value):
+        return Vec3(self.x*value, self.y*value, self.z*value)
 
+    def __truediv__(self, other):
+        # if isinstance(other, numbers.Number):
+        #     return Vec3(self.x/other, self.y/other, self.z/other)
         return Vec3(self.x/other.x, self.y/other.y, self.z/other.z)
+
+    def div_val(self, value):
+        return Vec3(self.x/value, self.y/value, self.z/value)
 
     def get_x(self):
         return self.x
@@ -116,7 +123,9 @@ class Vec3():
 
 
 def squared_length(v: Vec3):
-    return v.x*v.x + v.y*v.y + v.z*v.z
+    x,y,z = v.x, v.y, v.z
+    # return v.x*v.x + v.y*v.y + v.z*v.z
+    return x*x + y*y + z*z
 
 def cross(a: Vec3, b: Vec3):
     return Vec3(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x)
@@ -181,25 +190,35 @@ class Camera():
         viewport_width = aspect_ratio * viewport_height
 
         if focus_dist == math.inf:
-            self.horizontal = viewport_width * self.u
-            self.vertical = viewport_height * self.v
-            self.lower_left_corner = self.origin - self.horizontal/2 - self.vertical/2 - self.w
+            # self.horizontal = viewport_width * self.u
+            self.horizontal = self.u.mul_val(viewport_width)
+            # self.vertical = viewport_height * self.v
+            self.vertical =  self.v.mul_val(viewport_height)
+            # self.lower_left_corner = self.origin - self.horizontal/2 - self.vertical/2 - self.w
+            self.lower_left_corner = self.origin - self.horizontal.div_val(2) - self.vertical.div_val(2) - self.w
             self.lens_radius = aperature / 2
         else:
-            self.horizontal = self.u * viewport_width * focus_dist
-            self.vertical  = self.v * viewport_height * focus_dist
-            self.lower_left_corner = self.origin - self.horizontal/2 - self.vertical/2 - self.w * focus_dist
+            # self.horizontal = self.u * viewport_width * focus_dist
+            self.horizontal = self.u.mul_val(viewport_width * focus_dist)
+            # self.vertical  = self.v * viewport_height * focus_dist
+            self.vertical  = self.v.mul_val(viewport_height * focus_dist)
+            # self.lower_left_corner = self.origin - self.horizontal/2 - self.vertical/2 - self.w * focus_dist
+            self.lower_left_corner = self.origin - self.horizontal.div_val(2) - self.vertical.div_val(2) - self.w.mul_val(focus_dist)
             self.lens_radius = aperature / 2
 
     def get_ray(self, s: float, t: float):
         if self.lens_radius < 0.01:
             origin = self.origin
-            direction = self.lower_left_corner + s*self.horizontal + t*self.vertical - self.origin
+            # direction = self.lower_left_corner + s*self.horizontal + t*self.vertical - self.origin
+            direction = self.lower_left_corner + self.horizontal.mul_val(s) + self.vertical.mul_val(t) - self.origin
         else:
-            rd = random_in_unit_disc() * self.lens_radius
-            offset = self.u * rd.x + self.v * rd.y
+            # rd = random_in_unit_disc() * self.lens_radius
+            rd = random_in_unit_disc().mul_val(self.lens_radius)
+            # offset = self.u * rd.x + self.v * rd.y
+            offset = self.u.mul_val(rd.x) + self.v.mul_val(rd.y)
             origin = self.origin + offset
-            direction = self.lower_left_corner + self.horizontal*s + self.vertical*t - self.origin - offset
+            # direction = self.lower_left_corner + self.horizontal*s + self.vertical*t - self.origin - offset
+            direction = self.lower_left_corner + self.horizontal.mul_val(s) + self.vertical.mul_val(t) - self.origin - offset
         return Ray(origin, direction)
 
 
@@ -218,7 +237,8 @@ class Ray():
         return f'Ray(origin={self.origin}, direction={self.direction}, tmin={self.tmin}, tmax={self.tmax})'
 
     def at(self, t: float):
-        return self.origin + self.direction * t
+        # return self.origin + self.direction * t
+        return self.origin + self.direction.mul_val(t)
 
 
 MaterialReturn = namedtuple("MaterialReturn", "more scattered attenuation")
@@ -324,20 +344,20 @@ class Sphere(Geometry):
 
             if t_min < t < t_max:
                 p = ray.at(t)
-                n = (p - self.center) / self.radius
-                # hr = HitRecord(point=p, normal=n, t=t, material=self.material)
+                # n = (p - self.center) / self.radius
+                n = (p - self.center).div_val(self.radius)
             else:
                 t = (-half_b + root) / a
 
                 if t_min < t < t_max:
                     p = ray.at(t)
-                    n = (p - self.center) / self.radius
-                    # hr = HitRecord(point=p, normal=n, t=t, material=self.material)
+                    # n = (p - self.center) / self.radius
+                    n = (p - self.center).div_val(self.radius)
 
-            # if hr is not None:
             if p is not None:
                 hr = HitRecord(point=p, normal=n, t=t, material=self.material)
-                outward_normal = (hr.point - self.center) / self.radius
+                # outward_normal = (hr.point - self.center) / self.radius
+                outward_normal = (hr.point - self.center).div_val(self.radius)
                 hr.set_face_normal(ray, outward_normal)
 
         return hr
