@@ -124,7 +124,6 @@ class Vec3():
 
 def squared_length(v: Vec3):
     x,y,z = v.x, v.y, v.z
-    # return v.x*v.x + v.y*v.y + v.z*v.z
     return x*x + y*y + z*z
 
 def cross(a: Vec3, b: Vec3):
@@ -359,6 +358,62 @@ class Sphere(Geometry):
                 # outward_normal = (hr.point - self.center) / self.radius
                 outward_normal = (hr.point - self.center).div_val(self.radius)
                 hr.set_face_normal(ray, outward_normal)
+
+        return hr
+
+
+class Plane(Geometry):
+    def __init__(self, a: float, b: float, c: float, d: float, material: Material):
+        # Ax + By + cz +d = 0
+        super().__init__(material)
+        self.a = a
+        self.b = b
+        self.c = c
+        self.d = d
+        self.normal = Vec3(a,b,c).unit_vector()
+        self.inverse_normal = -self.normal
+
+    def __repr__(self):
+        return f'Plane(a={self.a}, b={self.b}, c={self.c}, d={self.d},  material={self.material})'
+
+    @classmethod
+    def plane_from_three_points(cls, a: Vec3, b: Vec3, c: Vec3, material: Material) -> "Plane":
+        ab = b - a
+        ac = c - b
+        normal = cross(ab, ac)
+        d = dot(normal, -a)
+        return cls(normal.x, normal.y, normal.z, d, material)
+
+    @classmethod
+    def plane_from_point_and_normal(cls, pt: Vec3, normal: Vec3, material: Material) -> "Plane":
+        d = dot(normal, -pt)
+        return cls(normal.x, normal.y, normal.z, d, material)
+
+    def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
+        hr = None
+        vd = dot(self.normal, ray.direction)
+
+        if vd == 0:  # ray is parallel to the plane -- no hit
+            return hr
+        elif vd > 0:  # normal is pointing away from the plane -- no hit for 1-sided plane
+            return hr
+
+        vo = -(dot(self.normal, ray.origin) + self.d)
+        t = vo/vd
+
+        if t < 0:  # intersection behind origin
+            return hr
+
+        ri = ray.origin + ray.direction.mul_val(t)
+
+        if vd < 0:
+            rn = self.normal
+        else:
+            rn = self.inverse_normal
+
+        if t_min < t < t_max:
+            hr = HitRecord(ri, rn, t, self.material)
+            hr.set_face_normal(ray, rn)
 
         return hr
 
