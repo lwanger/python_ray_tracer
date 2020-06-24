@@ -17,7 +17,7 @@ from random import random, uniform
 import numpy as np
 
 from framebuffer import FrameBuffer, save_image, show_image
-from geometry_classes import Vec3, Ray, Camera, Geometry, GeometryList, Sphere, Plane
+from geometry_classes import Vec3, Ray, Camera, Geometry, GeometryList, Sphere, Plane, Triangle
 from material_classes import Lambertian, Metal, Dielectric
 
 
@@ -55,6 +55,30 @@ def create_simple_world():
 
 def create_simple_world_2():
     # use a plane instead of a big sphere!
+    # diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
+    diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0))
+    diffuse_3 = Lambertian(Vec3(0.2, 0.2, 0.7))
+    metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3)
+    metal_2 = Metal(Vec3(0.4,0.4,0.4), fuzziness=0.0)
+    # dielectric_1 = Dielectric(1.5)
+
+    world = GeometryList()
+
+    world.add(Sphere(Vec3(0,0,-1), 1.5, metal_1))
+
+    plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0,-3,0), normal=Vec3(0,1,0), material=diffuse_3)
+    plane_2 = Plane.plane_from_point_and_normal(pt=Vec3(0,0,-10), normal=Vec3(0,0,1), material=metal_2)
+    # plane_3 = Plane.plane_from_point_and_normal(pt=Vec3(0,5,0), normal=Vec3(0.3,-1,0), material=diffuse_2)
+
+    world.add(plane_1)
+    world.add(plane_2)
+    # world.add(plane_3)
+
+    return world
+
+
+def create_simple_world_3():
+    # add triangles
     diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
     diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0))
     diffuse_3 = Lambertian(Vec3(0.2, 0.2, 0.7))
@@ -63,31 +87,28 @@ def create_simple_world_2():
     dielectric_1 = Dielectric(1.5)
 
     world = GeometryList()
-    # world.add(Sphere(Vec3(0,0,-1), 0.5, diffuse_1))
 
-    world.add(Sphere(Vec3(0,0,-1), 1.5, metal_1))
+    world.add(Sphere(Vec3(0,0,-1), 1.5, metal_2))
 
-    # world.add(Sphere(Vec3(1,0,-1), 0.5, metal_1))
-    # world.add(Sphere(Vec3(0,0,-1), 1.5, metal_1))
-    # world.add(Sphere(Vec3(-1,0,-1),0.5, dielectric_1))
-    # world.add(Sphere(Vec3(-1,0,-1),-0.45, dielectric_1))  # hollow sphere
+    v0 = Vec3(-1.8, -0.5, 1.5)
+    v1 = Vec3(-1.0, 0.5, 1.5)
+    v2 = Vec3(-0.2, -0.5, 1.5)
+    world.add(Triangle(v0,v1,v2,diffuse_1))
+
+    v0 = Vec3(1.8, -0.5, 1.5)
+    v1 = Vec3(1.0, 0.5, 1.5)
+    v2 = Vec3(0.2, -0.5, 1.5)
+    world.add(Triangle(v0, v1, v2, metal_1))
+
+    v0 = Vec3(-1.0, 0.8, 1.5)
+    v1 = Vec3(0.0, 2.5, 0.75)
+    v2 = Vec3(1.0, 0.8, 1.5)
+    world.add(Triangle(v0, v1, v2, dielectric_1))
+    # world.add(Triangle(v0, v1, v2, diffuse_1))
 
     plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0,-3,0), normal=Vec3(0,1,0), material=diffuse_3)
 
-    plane_2 = Plane.plane_from_point_and_normal(pt=Vec3(0,0,-10), normal=Vec3(0,0,1), material=metal_2)
-
-    plane_3 = Plane.plane_from_point_and_normal(pt=Vec3(0,5,0), normal=Vec3(0.3,-1,0), material=diffuse_2)
-
-    # a = Vec3(0,0,-5)
-    # b = Vec3(1,0,-5)
-    # c = Vec3(0,1,-5)
-    # plane_2 = Plane.plane_from_three_points(a,b,c, material=metal_2)
-
-    # plane_2 = Plane.plane_from_point_and_normal(pt=Vec3(0, 0, 10), normal=Vec3(0,0,1), material=diffuse_2)
-
     world.add(plane_1)
-    world.add(plane_2)
-    # world.add(plane_3)
 
     return world
 

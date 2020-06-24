@@ -23,20 +23,29 @@ from PIL import Image, ImageTk
 from framebuffer import FrameBuffer, save_image, show_image
 from geometry_classes import Vec3, Ray
 
-from weekend_final_pic import Camera, ray_color, create_random_world, create_simple_world
+from weekend_final_pic import Camera, ray_color
+from weekend_final_pic import create_random_world, create_simple_world, create_simple_world_2, create_simple_world_3
 
-X_SIZE = 384
-X_SIZE = 100
-# CHUNK_SIZE = 100
-CHUNK_SIZE = 10
-# CHUNK_SIZE = 5
+USE_RES=2
+
+if USE_RES==1:
+    X_SIZE = 100
+    CHUNK_SIZE = 10
+    SAMPLES_PER_PIXEL = 10
+    MAX_DEPTH = 10
+elif USE_RES==2:
+    X_SIZE = 200
+    CHUNK_SIZE = 25
+    SAMPLES_PER_PIXEL = 50
+    MAX_DEPTH = 30
+else:  # USE_RES==3:
+    X_SIZE = 384
+    CHUNK_SIZE = 100
+    SAMPLES_PER_PIXEL = 100
+    MAX_DEPTH = 50
+
 RANDOM_CHUNKS = True
 
-# SAMPLES_PER_PIXEL = 100
-# SAMPLES_PER_PIXEL = 50
-SAMPLES_PER_PIXEL = 10
-# MAX_DEPTH = 50
-MAX_DEPTH = 25
 FOV = 20
 
 # messages from GUI
@@ -105,7 +114,9 @@ class App(tk.Frame):
         # self.worker = None
 
         # self.world_creator = create_simple_world
-        self.world_creator = create_random_world
+        # self.world_creator = create_random_world
+        # self.world_creator = create_simple_world_2
+        self.world_creator = create_simple_world_3
 
         aspect_ratio = 16.0 / 9.0
         self.x_size = X_SIZE
@@ -119,7 +130,8 @@ class App(tk.Frame):
         focal_length = 1.0
         self.chunk_size = CHUNK_SIZE
 
-        self.look_from = Vec3(13, 2, 3)
+        # self.look_from = Vec3(13, 2, 3)
+        self.look_from = Vec3(2, 2, 13)
         self.look_at = Vec3(0, 0, 0)
         self.vup = Vec3(0, 1, 0)
         self.fd = 10.0

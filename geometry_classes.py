@@ -14,7 +14,9 @@ import math
 from random import uniform
 from typing import Optional
 
-_TINY = 1e-15
+EPSILON = 1e-15
+NEG_EPSILON = -1e-15
+
 DEFAULT_ASPECT_RATIO = 16.0/9.0
 DEFAULT_FOV = 90.0
 
@@ -393,7 +395,8 @@ class Plane(Geometry):
         hr = None
         vd = dot(self.normal, ray.direction)
 
-        if vd == 0:  # ray is parallel to the plane -- no hit
+        # if vd == 0:  # ray is parallel to the plane -- no hit
+        if abs(vd) < EPSILON:  # ray is parallel to the plane -- no hit
             return hr
         elif vd > 0:  # normal is pointing away from the plane -- no hit for 1-sided plane
             return hr
@@ -405,6 +408,70 @@ class Plane(Geometry):
             return hr
 
         ri = ray.origin + ray.direction.mul_val(t)
+
+        if vd < 0:
+            rn = self.normal
+        else:
+            rn = self.inverse_normal
+
+        if t_min < t < t_max:
+            hr = HitRecord(ri, rn, t, self.material)
+            hr.set_face_normal(ray, rn)
+
+        return hr
+
+
+class Triangle(Geometry):
+    def __init__(self, v0: Vec3, v1: Vec3, v2: Vec3, material: Material):
+        # Ax + By + cz +d = 0
+        super().__init__(material)
+        self.v0 = v0
+        self.v1 = v1
+        self.v2 = v2
+        v0v1 = v1 - v0
+        v0v2 = v2 - v0
+        self.normal = cross(v0v1, v0v2).normalize()
+        self.inverse_normal = -self.normal
+
+    def __repr__(self):
+        return f'Triangle(v0={self.v0}, v1={self.v1}, v2={self.v2},  material={self.material})'
+
+    def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
+        # Moller Trumbore method -- https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+        hr = None
+
+        v0 = self.v0
+        v1 = self.v1
+        v2 = self.v2
+        edge1 = v1 - v0
+        edge2 = v2 - v0
+        h = cross(ray.direction, edge2)
+        a = dot(edge1, h)
+
+        if NEG_EPSILON < a < EPSILON:  # ray parallel to triangle
+            return hr
+
+        f = 1 / a
+        s = ray.origin - v0
+        u = f * dot(s, h)
+
+        if u < 0 or u > 1:
+            return hr
+
+        q = cross(s, edge1)
+        v = f * dot(ray.direction, q)
+
+        if v < 0 or u + v > 1:
+            return hr
+
+        # point is in triangle... return t
+        t = f * dot(edge2, q)
+
+        if t < EPSILON:  # intersects with line, not ray
+            return hr
+
+        ri = ray.origin + ray.direction.mul_val(t)
+        vd = dot(self.normal, ray.direction) # faster way? Already computed?
 
         if vd < 0:
             rn = self.normal
