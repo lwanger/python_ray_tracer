@@ -11,7 +11,8 @@ from collections import namedtuple
 import math
 from random import random
 
-from geometry_classes import Vec3, Ray, dot, random_unit_vec3, random_in_unit_sphere
+from geometry_classes import Vec3, Geometry, Ray, dot, random_unit_vec3, random_in_unit_sphere
+
 
 _TINY = 1e-15
 
@@ -20,7 +21,7 @@ MaterialReturn = namedtuple("MaterialReturn", "more scattered attenuation")
 
 
 class Material(ABC):
-    def __init__(self, name):
+    def __init__(self, name: str='unnamed'):
         self.name = name
 
     def __repr__(self):
@@ -52,8 +53,12 @@ def refract(uv: Vec3, n: Vec3, etai_over_etat: float):
 
 
 class Lambertian(Material):
-    def __init__(self, color: Vec3):
+    def __init__(self, color: Vec3, name=None):
+        super().__init__(name)
         self.albedo = color
+
+    def __repr__(self):
+        return f'Lambertian(name={self.name}, albedo={self.albedo})'
 
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         scatter_direction = hr.normal + random_unit_vec3()
@@ -63,12 +68,16 @@ class Lambertian(Material):
 
 
 class Metal(Material):
-    def __init__(self, color: Vec3, fuzziness:float=1.0):
+    def __init__(self, color: Vec3, fuzziness:float=1.0, name=None):
+        super().__init__(name)
         self.albedo = color
         if fuzziness > 1.0:
             self.fuzziness = 1.0
         else:
             self.fuzziness = fuzziness
+
+    def __repr__(self):
+        return f'Metal(name={self.name}, albedo={self.albedo}, fuzziness={self.fuzziness})'
 
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         unit_vector = ray_in.direction.unit_vector()
@@ -82,8 +91,12 @@ class Metal(Material):
 
 class Dielectric(Material):
     # transparent material
-    def __init__(self, refractive_index: float):
+    def __init__(self, refractive_index: float, name=None):
+        super().__init__(name)
         self.refraction_idx = refractive_index
+
+    def __repr__(self):
+        return f'Dielectric(name={self.name}, refraction_idx={self.refraction_idx})'
 
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         attenuation = Vec3(1,1,1)
@@ -110,3 +123,22 @@ class Dielectric(Material):
                 scattered = Ray(hr.point, refracted)
 
         return MaterialReturn(True, scattered, attenuation)
+
+
+def ray_color(ray: Ray, world: Geometry, depth=1):
+    if depth < 1:
+        return Vec3(0, 0, 0)
+
+    hr = world.hit(ray, 0.001, math.inf)
+
+    if hr is not None:
+        matl_record = hr.material.scatter(ray, hr)
+        if matl_record.more:
+            return matl_record.attenuation * ray_color(matl_record.scattered, world, depth-1)
+        else:
+            return Vec3(0,0,0)
+
+    unit_direction = ray.direction.unit_vector()
+    t = 0.5 * (unit_direction.y + 1.0)
+    # return Vec3(1.0, 1.0, 1.0)*(1-t) + Vec3(0.5, 0.7, 1.0)*t
+    return Vec3(1.0, 1.0, 1.0).mul_val(1-t) + Vec3(0.5, 0.7, 1.0).mul_val(t)

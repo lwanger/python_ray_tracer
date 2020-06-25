@@ -1,33 +1,25 @@
 """
-Simple camera
+Scene creation functions
 
 Listing 60 from Pete Shirley's Ray Tracing in a Weekend:
 
 https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
-Add movable camera
-
 Len Wanger -- 2020
 """
 
-import math
-import os
 from random import random, uniform
-
-import numpy as np
-
-from framebuffer import FrameBuffer, save_image, show_image
-from geometry_classes import Vec3, Ray, Camera, Geometry, GeometryList
+from geometry_classes import Vec3, GeometryList, Scene
 from geometry_classes import random_on_unit_sphere
-from material_classes import Lambertian, Metal, Dielectric, ray_color
+from material_classes import Lambertian, Metal, Dielectric
 from primitives_classes import Sphere, Plane, Triangle
 
 
 def create_simple_world():
-    diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
-    diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0))
-    metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3)
-    dielectric_1 = Dielectric(1.5)
+    diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3), name="diffuse_1")
+    diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0), name="diffuse_2")
+    metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3, name="metal_1")
+    dielectric_1 = Dielectric(1.5, name="dielectric_1")
 
     world = GeometryList()
     world.add(Sphere(Vec3(0,0,-1), 0.5, diffuse_1))
@@ -35,16 +27,17 @@ def create_simple_world():
     world.add(Sphere(Vec3(1,0,-1), 0.5, metal_1))
     world.add(Sphere(Vec3(-1,0,-1),0.5, dielectric_1))
     world.add(Sphere(Vec3(-1,0,-1),-0.45, dielectric_1))  # hollow sphere
-    return world
+    # return world
+    return Scene(world)
 
 def create_simple_world_2():
     # use a plane instead of a big sphere!
-    # diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
-    diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0))
-    diffuse_3 = Lambertian(Vec3(0.2, 0.2, 0.7))
-    metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3)
-    metal_2 = Metal(Vec3(0.4,0.4,0.4), fuzziness=0.0)
-    # dielectric_1 = Dielectric(1.5)
+    # diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3), name="diffuse_1")
+    diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0), name="diffuse_2")
+    diffuse_3 = Lambertian(Vec3(0.2, 0.2, 0.7), name="diffuse_3")
+    metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3, name="metal_1")
+    metal_2 = Metal(Vec3(0.4,0.4,0.4), fuzziness=0.0, name="metal_2")
+    # dielectric_1 = Dielectric(1.5, name="dielectric_1")
 
     world = GeometryList()
 
@@ -58,7 +51,8 @@ def create_simple_world_2():
     world.add(plane_2)
     # world.add(plane_3)
 
-    return world
+    return Scene(world)
+
 
 
 def create_simple_world_3():
@@ -94,7 +88,7 @@ def create_simple_world_3():
 
     world.add(plane_1)
 
-    return world
+    return Scene(world)
 
 
 def create_random_world():
@@ -132,7 +126,7 @@ def create_random_world():
     world.add(Sphere(Vec3(-4, 1, 0), 1.0, material_2))
     material_3 = Metal(Vec3(0.7,0.6,0.5), 0.0)
     world.add(Sphere(Vec3(4, 1, 0), 1.0, material_3))
-    return world
+    return Scene(world)
 
 
 def create_random_world2():
@@ -181,63 +175,4 @@ def create_random_world2():
                 triangle = Triangle(v0,v1,v2, material)
                 world.add(triangle)
 
-    return world
-
-
-if __name__ == '__main__':
-    from tqdm import tqdm
-
-    use_res = int(os.getenv("USE_RES", 2))
-    image_file = os.getenv("IMAGE_FILE", "image.png")
-
-    ASPECT_RATIO = 16.0 / 9.0
-
-    if use_res == 0:  # ultra low res for debugging
-        X_SIZE = 100
-        SAMPLES_PER_PIXEL = 1
-        MAX_DEPTH = 5
-    elif use_res == 1:  # ultra low res for debugging
-        X_SIZE = 200
-        SAMPLES_PER_PIXEL = 4
-        MAX_DEPTH = 10
-    elif use_res == 2:  # normal res
-        X_SIZE = 384
-        SAMPLES_PER_PIXEL = 5
-        MAX_DEPTH = 25
-    else:  # ultra high res
-        X_SIZE = 1024
-        SAMPLES_PER_PIXEL = 100
-        MAX_DEPTH = 50
-
-    Y_SIZE = int(X_SIZE / ASPECT_RATIO)
-
-    print(
-        f'image_file={image_file}, use_res={use_res}: x_size={X_SIZE}, y_size={Y_SIZE}, samples_per_pixel={SAMPLES_PER_PIXEL}, max_depth={MAX_DEPTH}')
-
-    fb = FrameBuffer(X_SIZE, Y_SIZE, np.int8, 'rgb')
-
-    look_from = Vec3(13,2,3)
-    look_at = Vec3(0,0,0)
-    vup = Vec3(0,1,0)
-    fd = 10.0
-    aperature = 0.1
-    camera = Camera(look_from, look_at, vup, 20, aperature=aperature, focus_dist=fd)
-
-    world = create_random_world()
-
-    # write to framebuffer
-    for j in tqdm(range(Y_SIZE), desc="scanlines"):
-        for i in range(X_SIZE):
-            pixel_color = Vec3(0, 0, 0)
-
-            for s in range(SAMPLES_PER_PIXEL):
-                u = (i + random()) / (X_SIZE-1)
-                v = (j + random()) / (Y_SIZE-1)
-                ray = camera.get_ray(u, v)
-                pixel_color += ray_color(ray, world, MAX_DEPTH)
-
-            fb.set_pixel(i, j, pixel_color.get_unscaled_color(), SAMPLES_PER_PIXEL)
-
-    img = fb.make_image()
-    show_image(img)
-    save_image(img, image_file)
+    return Scene(world)

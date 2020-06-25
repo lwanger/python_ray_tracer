@@ -4,7 +4,6 @@ GUI on top of the ray tracer
 TODO:
     - update canvas paste a chunk
     - asyncio?
-    - add import create_world
     - add settings dialog (image_name, size, aspect ratio, chunk size, # of worked, samples_per_pixel, max depth)
     - add multi-processing
     - why canvas bigger than rendering in X?
@@ -21,31 +20,29 @@ import tkinter as tk
 from PIL import Image, ImageTk
 
 from framebuffer import FrameBuffer, save_image, show_image
-from geometry_classes import Vec3, Ray
+from geometry_classes import Vec3, Ray, Camera
 
-from weekend_final_pic import Camera, ray_color
-from weekend_final_pic import create_random_world, create_simple_world, create_simple_world_2, create_simple_world_3
+from material_classes import ray_color
+from create_scene_funcs import create_random_world, create_simple_world, create_simple_world_2, create_simple_world_3, create_random_world2
 
-USE_RES=2
+USE_RES = 'low'
+# USE_RES = 'med'
+# USE_RES = 'high'
+# USE_RES = 'ultra'
 
-if USE_RES==1:
-    X_SIZE = 100
-    CHUNK_SIZE = 10
-    SAMPLES_PER_PIXEL = 10
-    MAX_DEPTH = 10
-elif USE_RES==2:
-    X_SIZE = 200
-    CHUNK_SIZE = 25
-    SAMPLES_PER_PIXEL = 50
-    MAX_DEPTH = 30
-else:  # USE_RES==3:
-    X_SIZE = 384
-    CHUNK_SIZE = 100
-    SAMPLES_PER_PIXEL = 100
-    MAX_DEPTH = 50
+res_settings = {
+        'low': { 'x_size': 100, 'chunk_size': 10, 'samples_per_pixel': 10, 'max_depth': 10 },
+        'med': { 'x_size': 200, 'chunk_size': 25, 'samples_per_pixel': 25, 'max_depth': 20 },
+        'high': { 'x_size': 384, 'chunk_size': 25, 'samples_per_pixel': 50, 'max_depth': 25 },
+        'ultra': { 'x_size': 1024, 'chunk_size': 25, 'samples_per_pixel': 100, 'max_depth': 50 },
+}
+
+X_SIZE = res_settings[USE_RES]['x_size']
+CHUNK_SIZE = res_settings[USE_RES]['chunk_size']
+SAMPLES_PER_PIXEL = res_settings[USE_RES]['samples_per_pixel']
+MAX_DEPTH = res_settings[USE_RES]['max_depth']
 
 RANDOM_CHUNKS = True
-
 FOV = 20
 
 # messages from GUI
@@ -99,13 +96,6 @@ def render_worker(start, end, pipe_conn):
         # send_gui_message(pipe_conn, CANCELLED_MSG, None)
         pass
 
-###
-
-
-# def ray_color(ray: Ray):
-#     unit_dir = ray.direction.unit_vector()
-#     t = 0.5 * (unit_dir.y + 1.0)
-#     return Vec3(1.0,1.0,1.0)*(1.0-t) + Vec3(0.5,0.7,1.0)*t
 
 
 class App(tk.Frame):
@@ -114,9 +104,10 @@ class App(tk.Frame):
         # self.worker = None
 
         # self.world_creator = create_simple_world
-        # self.world_creator = create_random_world
+        self.world_creator = create_random_world
         # self.world_creator = create_simple_world_2
-        self.world_creator = create_simple_world_3
+        # self.world_creator = create_simple_world_3
+        # self.world_creator = create_random_world2
 
         aspect_ratio = 16.0 / 9.0
         self.x_size = X_SIZE
@@ -300,11 +291,11 @@ class App(tk.Frame):
             time_str = f'rendering time: {ts:.2f} seconds'
         elif ts < 3600:  # < 1 hr
             m, s = divmod(ts, 60)
-            time_str = f'rendering time: {m} minutes, {s:.2f} seconds'
+            time_str = f'rendering time: {int(m)} minutes, {s:.2f} seconds'
         else:  # hours
             h, m = divmod(ts, 3600)
             m, s = divmod(m, 60)
-            time_str = f'rendering time: {h} hours, {m} minutes, {s:.2f} seconds'
+            time_str = f'rendering time: {int(h)} hours, {int(m)} minutes, {s:.2f} seconds'
 
         im = self.fb.make_image()
         save_image(im, "rt_gui.png")

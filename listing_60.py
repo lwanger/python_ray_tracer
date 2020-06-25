@@ -19,8 +19,9 @@ import numpy as np
 from tqdm import tqdm
 
 from framebuffer import FrameBuffer, save_image, show_image
-from geometry_classes import Vec3, Ray, Camera, Geometry, GeometryList, Sphere
+from geometry_classes import Vec3, Ray, Camera, Geometry, GeometryList
 from material_classes import Lambertian, Metal, Dielectric
+from primitives_classes import Sphere
 
 use_res = int(os.getenv("USE_RES", 2))
 image_file = os.getenv("IMAGE_FILE", "image.png")
