@@ -12,6 +12,7 @@ import math
 from random import random
 
 from geometry_classes import Vec3, Geometry, Ray, dot, random_unit_vec3, random_in_unit_sphere
+from texture_classes import Texture
 
 
 _TINY = 1e-15
@@ -53,24 +54,33 @@ def refract(uv: Vec3, n: Vec3, etai_over_etat: float):
 
 
 class Lambertian(Material):
-    def __init__(self, color: Vec3, name=None):
+    # def __init__(self, color: Vec3, name=None):
+    def __init__(self, a: Texture, name=None):
         super().__init__(name)
-        self.albedo = color
+        self.albedo = a
 
     def __repr__(self):
         return f'Lambertian(name={self.name}, albedo={self.albedo})'
 
+    def uv_used(self):
+        return self.albedo.uv_used
+
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         scatter_direction = hr.normal + random_unit_vec3()
         scattered = Ray(hr.point, scatter_direction)
-        attenuation = self.albedo
+
+        # attenuation = self.albedo
+        attenuation = self.albedo.value(hr.u, hr.v, hr.point)
+
         return MaterialReturn(True, scattered, attenuation)
 
 
 class Metal(Material):
-    def __init__(self, color: Vec3, fuzziness:float=1.0, name=None):
+    # def __init__(self, color: Vec3, fuzziness:float=1.0, name=None):
+    def __init__(self, a: Texture, fuzziness:float=1.0, name=None):
         super().__init__(name)
-        self.albedo = color
+        # self.albedo = color
+        self.albedo = a
         if fuzziness > 1.0:
             self.fuzziness = 1.0
         else:
@@ -79,12 +89,16 @@ class Metal(Material):
     def __repr__(self):
         return f'Metal(name={self.name}, albedo={self.albedo}, fuzziness={self.fuzziness})'
 
+    def uv_used(self):
+        return self.albedo.uv_used
+
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         unit_vector = ray_in.direction.unit_vector()
         reflected = reflect(unit_vector, hr.normal)
         # scattered = Ray(hr.point, reflected + random_in_unit_sphere()*self.fuzziness)
         scattered = Ray(hr.point, reflected + random_in_unit_sphere().mul_val(self.fuzziness))
-        attenuation = self.albedo
+        # attenuation = self.albedo
+        attenuation = self.albedo.value(hr.u, hr.v, hr.point)
         more = dot(scattered.direction, hr.normal) > 0
         return MaterialReturn(more, scattered, attenuation)
 
@@ -97,6 +111,9 @@ class Dielectric(Material):
 
     def __repr__(self):
         return f'Dielectric(name={self.name}, refraction_idx={self.refraction_idx})'
+
+    def uv_used(self):
+        return False
 
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         attenuation = Vec3(1,1,1)

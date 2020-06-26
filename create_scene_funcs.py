@@ -12,13 +12,18 @@ from random import random, uniform
 from geometry_classes import Vec3, GeometryList, Scene
 from geometry_classes import random_on_unit_sphere
 from material_classes import Lambertian, Metal, Dielectric
+from texture_classes import SolidColor, CheckerBoard
 from primitives_classes import Sphere, Plane, Triangle
 
 
 def create_simple_world():
-    diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3), name="diffuse_1")
-    diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0), name="diffuse_2")
-    metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3, name="metal_1")
+    color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
+    color_2 = SolidColor(Vec3(0.8, 0.8, 0))
+    color_3 = SolidColor(Vec3(0.8,0.6,0.2))
+
+    diffuse_1 = Lambertian(color_1, name="diffuse_1")
+    diffuse_2 = Lambertian(color_2, name="diffuse_2")
+    metal_1 = Metal(color_3, fuzziness=0.3, name="metal_1")
     dielectric_1 = Dielectric(1.5, name="dielectric_1")
 
     world = GeometryList()
@@ -27,17 +32,18 @@ def create_simple_world():
     world.add(Sphere(Vec3(1,0,-1), 0.5, metal_1))
     world.add(Sphere(Vec3(-1,0,-1),0.5, dielectric_1))
     world.add(Sphere(Vec3(-1,0,-1),-0.45, dielectric_1))  # hollow sphere
-    # return world
+
     return Scene(world)
 
 def create_simple_world_2():
     # use a plane instead of a big sphere!
-    # diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3), name="diffuse_1")
-    diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0), name="diffuse_2")
-    diffuse_3 = Lambertian(Vec3(0.2, 0.2, 0.7), name="diffuse_3")
-    metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3, name="metal_1")
-    metal_2 = Metal(Vec3(0.4,0.4,0.4), fuzziness=0.0, name="metal_2")
-    # dielectric_1 = Dielectric(1.5, name="dielectric_1")
+    color_3 = SolidColor(Vec3(0.2, 0.2, 0.7))
+    color_4 = SolidColor(Vec3(0.8,0.6,0.2))
+    color_5 = SolidColor(Vec3(0.4,0.4,0.4))
+
+    diffuse_3 = Lambertian(color_3, name="diffuse_3")
+    metal_1 = Metal(color_4, fuzziness=0.3, name="metal_1")
+    metal_2 = Metal(color_5, fuzziness=0.0, name="metal_2")
 
     world = GeometryList()
 
@@ -45,23 +51,22 @@ def create_simple_world_2():
 
     plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0,-3,0), normal=Vec3(0,1,0), material=diffuse_3)
     plane_2 = Plane.plane_from_point_and_normal(pt=Vec3(0,0,-10), normal=Vec3(0,0,1), material=metal_2)
-    # plane_3 = Plane.plane_from_point_and_normal(pt=Vec3(0,5,0), normal=Vec3(0.3,-1,0), material=diffuse_2)
 
     world.add(plane_1)
     world.add(plane_2)
-    # world.add(plane_3)
 
     return Scene(world)
 
 
-
 def create_simple_world_3():
     # add triangles
-    diffuse_1 = Lambertian(Vec3(0.7, 0.3, 0.3))
-    diffuse_2 = Lambertian(Vec3(0.8, 0.8, 0))
-    diffuse_3 = Lambertian(Vec3(0.2, 0.2, 0.7))
-    metal_1 = Metal(Vec3(0.8,0.6,0.2), fuzziness=0.3)
-    metal_2 = Metal(Vec3(0.4,0.4,0.4), fuzziness=0.0)
+    color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
+    color_2 = SolidColor(Vec3(0.2, 0.2, 0.7))
+    color_3 = SolidColor(Vec3(0.4,0.4,0.4))
+
+    diffuse_1 = Lambertian(color_1)
+    diffuse_3 = Lambertian(color_2)
+    metal_2 = Metal(color_3, fuzziness=0.0)
     dielectric_1 = Dielectric(1.5)
 
     world = GeometryList()
@@ -82,10 +87,8 @@ def create_simple_world_3():
     v1 = Vec3(0.0, 2.5, 0.75)
     v2 = Vec3(1.0, 0.8, 1.5)
     world.add(Triangle(v0, v1, v2, dielectric_1))
-    # world.add(Triangle(v0, v1, v2, diffuse_1))
 
     plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0,-3,0), normal=Vec3(0,1,0), material=diffuse_3)
-
     world.add(plane_1)
 
     return Scene(world)
@@ -93,7 +96,10 @@ def create_simple_world_3():
 
 def create_random_world():
     world = GeometryList()
-    ground_material = Lambertian(Vec3(0.5,0.5,0.5))
+
+    color_1 = SolidColor(Vec3(0.5,0.5,0.5))
+
+    ground_material = Lambertian(color_1)
     glass_material = Dielectric(1.5)
     center_offset = Vec3(4, 0.2, 9)
 
@@ -109,12 +115,14 @@ def create_random_world():
                     r = random()*random()
                     g = random()*random()
                     b = random()*random()
-                    albedo = Vec3(r,g,b)
+                    albedo = SolidColor(Vec3(r,g,b))
                     sphere_material = Lambertian(albedo)
                 elif choose_mat < 0.95:  # metal
-                    albedo = uniform(0.5, 1.0)
+                    a = uniform(0.5, 1.0)
                     fuzz = uniform(0.0, 0.5)
-                    sphere_material = Metal(Vec3(albedo, albedo, albedo), fuzz)
+                    albedo = SolidColor(Vec3(a,a,a))
+
+                    sphere_material = Metal(albedo, fuzz)
                 else:  # glass
                     sphere_material = glass_material
 
@@ -122,10 +130,15 @@ def create_random_world():
 
     material_1 = Dielectric(1.5)
     world.add(Sphere(Vec3(0,1,0), 1.0, material_1))
-    material_2 = Lambertian(Vec3(0.4, 0.2, 0.1))
+
+    color_2 = SolidColor(Vec3(0.4, 0.2, 0.1))
+    material_2 = Lambertian(color_2)
     world.add(Sphere(Vec3(-4, 1, 0), 1.0, material_2))
-    material_3 = Metal(Vec3(0.7,0.6,0.5), 0.0)
+
+    color_3 = SolidColor(Vec3(0.7,0.6,0.5))
+    material_3 = Metal(color_3, 0.0)
     world.add(Sphere(Vec3(4, 1, 0), 1.0, material_3))
+
     return Scene(world)
 
 
@@ -137,12 +150,13 @@ def create_random_world2():
             r = random() * random()
             g = random() * random()
             b = random() * random()
-            albedo = Vec3(r, g, b)
+            albedo = SolidColor(Vec3(r, g, b))
             material = Lambertian(albedo)
         elif choose_mat < 0.95:  # metal
-            albedo = uniform(0.5, 1.0)
+            a = uniform(0.5, 1.0)
+            albedo = SolidColor(Vec3(a,a,a))
             fuzz = uniform(0.0, 0.5)
-            material = Metal(Vec3(albedo, albedo, albedo), fuzz)
+            material = Metal(albedo, fuzz)
         else:  # glass
             material = glass_material
 
@@ -151,9 +165,11 @@ def create_random_world2():
     # a ground plane, a metal sphere and random triangles...
     world = GeometryList()
 
-    ground_material = Lambertian(Vec3(0.2,0.6,0.2))
-    metal_1 = Metal(Vec3(0.7,0.6,0.5), fuzziness=0.0)
-    metal_2 = Metal(Vec3(0.4,0.4,0.4), fuzziness=0.3)
+    ground_color = SolidColor(Vec3(0.2,0.6,0.2))
+    ground_material = Lambertian(ground_color)
+
+    metal_1 = Metal(SolidColor(Vec3(0.7,0.6,0.5)), fuzziness=0.0)
+    metal_2 = Metal(SolidColor(Vec3(0.4,0.4,0.4)), fuzziness=0.3)
     glass_material = Dielectric(1.5)
     center_offset = Vec3(4, 0.2, 9)
 
@@ -164,7 +180,6 @@ def create_random_world2():
 
     for a in range(-12, 12):
         for b in range(-12, 12):
-            # center = Vec3(a+0.9*random(), 0.2, b+0.9*random())
             center = Vec3(a+0.9*random(), 3*random()+0.3, b+0.9*random())
 
             if (center - center_offset).length() > 0.9:
@@ -175,4 +190,26 @@ def create_random_world2():
                 triangle = Triangle(v0,v1,v2, material)
                 world.add(triangle)
 
+    return Scene(world)
+
+def create_checkerboard_world():
+    color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
+    # color_2 = SolidColor(Vec3(0.8, 0.8, 0))
+    color_3 = SolidColor(Vec3(0.8,0.6,0.2))
+
+    odd_color = SolidColor(Vec3(0.2,0.3,0.1))
+    even_color = SolidColor(Vec3(0.9,0.9,0.9))
+    checker_board = CheckerBoard(even_color, odd_color, spacing=3)
+
+    diffuse_1 = Lambertian(color_1, name="diffuse_1")
+    diffuse_2 = Lambertian(checker_board, name="diffuse_checkerboard")
+    metal_1 = Metal(color_3, fuzziness=0.3, name="metal_1")
+    dielectric_1 = Dielectric(1.5, name="dielectric_1")
+
+    world = GeometryList()
+    world.add(Sphere(Vec3(0,0,-1), 0.5, diffuse_1))
+    world.add(Sphere(Vec3(0,-100.5,-1), 100, diffuse_2))
+    world.add(Sphere(Vec3(1,0,-1), 0.5, metal_1))
+    world.add(Sphere(Vec3(-1,0,-1),0.5, dielectric_1))
+    world.add(Sphere(Vec3(-1,0,-1),-0.45, dielectric_1))  # hollow sphere
     return Scene(world)

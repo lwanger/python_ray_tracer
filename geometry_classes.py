@@ -282,10 +282,12 @@ class Ray():
 
 class HitRecord():
 
-    def __init__(self, point: Vec3, normal: Vec3, t: float, material: "Material"):
+    def __init__(self, point: Vec3, normal: Vec3, t: float, material: "Material", u: float=None, v: float=None):
         self.point = point
         self.normal = normal
         self.t = t
+        self.u = u
+        self.v = v
         self.material = material
         self.front_face = None
 

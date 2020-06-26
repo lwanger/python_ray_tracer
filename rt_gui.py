@@ -37,7 +37,7 @@ from framebuffer import FrameBuffer, save_image, show_image
 from geometry_classes import Vec3, Ray, Camera
 
 from material_classes import ray_color
-from create_scene_funcs import create_random_world, create_simple_world, create_simple_world_2, create_simple_world_3, create_random_world2
+from create_scene_funcs import *
 
 
 res_settings = {
@@ -124,11 +124,12 @@ class App(tk.Frame):
         # self.gui_pipe_conn, self.worker_pipe_conn = Pipe()
         # self.worker = None
 
-        self.world_creator = create_simple_world
-        #self.world_creator = create_random_world
+        # self.world_creator = create_simple_world
+        # self.world_creator = create_random_world
         # self.world_creator = create_simple_world_2
         # self.world_creator = create_simple_world_3
         # self.world_creator = create_random_world2
+        self.world_creator = create_checkerboard_world
 
         self.y_size = int(self.x_size / self.aspect_ratio)
 

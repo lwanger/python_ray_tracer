@@ -11,11 +11,13 @@ removed isinstance calls from Vec3 dunder methods (was very slow!)
 import math
 from typing import Optional
 
-from geometry_classes import Vec3, Ray, Geometry, AABB, dot, cross
+from geometry_classes import Vec3, Ray, Geometry, HitRecord, AABB, dot, cross
 from material_classes import Material
 
 EPSILON = 1e-15
 NEG_EPSILON = -1e-15
+TWO_PI = 2*math.pi
+HALF_PI = math.pi/2
 
 
 def surrounding_box(box1: "AABB", box2: "AABB") -> "AABB":
@@ -43,26 +45,26 @@ def surrounding_box(box1: "AABB", box2: "AABB") -> "AABB":
     return AABB(new_min, new_max)
 
 
-class HitRecord():
-    # object passed back from a ray intersection
-    def __init__(self, point: Vec3, normal: Vec3, t: float, material: Material):
-        self.point = point
-        self.normal = normal
-        self.t = t
-        self.material = material
-        self.front_face = None
-
-    def __repr__(self):
-        return f'HitRecord(point={self.point}, normal={self.normal}, t={self.t}, ...)'
-
-    def set_face_normal(self, ray: Ray, outward_normal: Vec3):
-        dp = dot(ray.direction, outward_normal)
-        if dp < 0:
-            self.front_face = True
-            self.normal = outward_normal
-        else:
-            self.front_face = False
-            self.normal = -outward_normal
+# class HitRecord():
+#     # object passed back from a ray intersection
+#     def __init__(self, point: Vec3, normal: Vec3, t: float, material: Material):
+#         self.point = point
+#         self.normal = normal
+#         self.t = t
+#         self.material = material
+#         self.front_face = None
+#
+#     def __repr__(self):
+#         return f'HitRecord(point={self.point}, normal={self.normal}, t={self.t}, ...)'
+#
+#     def set_face_normal(self, ray: Ray, outward_normal: Vec3):
+#         dp = dot(ray.direction, outward_normal)
+#         if dp < 0:
+#             self.front_face = True
+#             self.normal = outward_normal
+#         else:
+#             self.front_face = False
+#             self.normal = -outward_normal
 
 
 class Sphere(Geometry):
@@ -84,6 +86,14 @@ class Sphere(Geometry):
         vmax = c + Vec3(r,r,r)
         aabb = AABB(vmin, vmax)
         return aabb
+
+    def get_uv(self, p: Vec3):
+        # find u,v of point hit -- returns tuple of (u:float, v: float)
+        phi = math.atan2(p.z, p.x)
+        theta = math.asin(p.y)
+        u = 1 - (phi + math.pi) / TWO_PI
+        v = (theta + HALF_PI) / math.pi
+        return (u,v)
 
     def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
         hr = None
@@ -111,7 +121,13 @@ class Sphere(Geometry):
                     n = (p - self.center).div_val(self.radius)
 
             if p is not None:
-                hr = HitRecord(point=p, normal=n, t=t, material=self.material)
+                if self.material.uv_used:
+                    uv_pt = (p-self.center).div_val(self.radius)
+                    u,v = self.get_uv(uv_pt)
+                else:
+                    u = v = None
+
+                hr = HitRecord(point=p, normal=n, t=t, material=self.material, u=u, v=v)
                 # outward_normal = (hr.point - self.center) / self.radius
                 outward_normal = (hr.point - self.center).div_val(self.radius)
                 hr.set_face_normal(ray, outward_normal)
