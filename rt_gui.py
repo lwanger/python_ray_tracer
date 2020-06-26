@@ -8,6 +8,17 @@ TODO:
     - add multi-processing
     - why canvas bigger than rendering in X?
 
+can use the following environment variables (or stored in .env file):
+
+    USE_RES: low', 'med', 'high', or 'ultra'. Sets to the settings in res_settings. Each can be overwritten by the
+        variables below.
+    X_SIZE: x size of the rendered image
+    ASPECT_RATIO: aspect ratio of the rendered image -- used to calculate y size (default is 16:9)
+    SAMPLES_PER_PIXEL: samples per pixel
+    MAX_DEPTH: maximum depth of bounces per pixel
+    CHUNK_SIZE: size of chunks to calculate (e.g. value of 10 is 10x10 pixel blocks)
+    RANDOM_CHUNKS: whether rendered chunks are in order or random (True - default)
+
 Len Wanger, copyright 2020
 """
 
@@ -15,8 +26,11 @@ from multiprocessing import Process, Pipe
 
 from datetime import datetime
 import numpy as np
+import os
 from random import random, uniform, shuffle
 import tkinter as tk
+
+import dotenv
 from PIL import Image, ImageTk
 
 from framebuffer import FrameBuffer, save_image, show_image
@@ -25,10 +39,6 @@ from geometry_classes import Vec3, Ray, Camera
 from material_classes import ray_color
 from create_scene_funcs import create_random_world, create_simple_world, create_simple_world_2, create_simple_world_3, create_random_world2
 
-USE_RES = 'low'
-# USE_RES = 'med'
-# USE_RES = 'high'
-# USE_RES = 'ultra'
 
 res_settings = {
         'low': { 'x_size': 100, 'chunk_size': 10, 'samples_per_pixel': 10, 'max_depth': 10 },
@@ -37,12 +47,6 @@ res_settings = {
         'ultra': { 'x_size': 1024, 'chunk_size': 25, 'samples_per_pixel': 100, 'max_depth': 50 },
 }
 
-X_SIZE = res_settings[USE_RES]['x_size']
-CHUNK_SIZE = res_settings[USE_RES]['chunk_size']
-SAMPLES_PER_PIXEL = res_settings[USE_RES]['samples_per_pixel']
-MAX_DEPTH = res_settings[USE_RES]['max_depth']
-
-RANDOM_CHUNKS = True
 FOV = 20
 
 # messages from GUI
@@ -96,33 +100,44 @@ def render_worker(start, end, pipe_conn):
         # send_gui_message(pipe_conn, CANCELLED_MSG, None)
         pass
 
-
+def env_or_defaults(var_name, def_val):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        return def_val
 
 class App(tk.Frame):
     def __init__(self):
+        use_res = env_or_defaults('USE_RES', 'med').lower()
+        res_setting = res_settings[use_res]
+        self.x_size = int(env_or_defaults('X_SIZE', res_setting['x_size']))
+        self.aspect_ratio = eval(env_or_defaults('ASPECT_RATIO', '16/9'))
+        self.chunk_size = int(env_or_defaults('CHUNK_SIZE', res_setting['chunk_size']))
+        self.samples_per_pixel = int(env_or_defaults('SAMPLES_PER_PIXEL', res_setting['samples_per_pixel']))
+        self.max_depth = int(env_or_defaults('MAX_DEPTH', res_setting['max_depth']))
+
+        if env_or_defaults('RANDOM_CHUNKS', True) in {'0', 'False', 'FALSE', 'false', 'no', 'No', 'NO'}:
+            self.random_chunks = False
+        else:
+            self.random_chunks = True
+
         # self.gui_pipe_conn, self.worker_pipe_conn = Pipe()
         # self.worker = None
 
-        # self.world_creator = create_simple_world
-        self.world_creator = create_random_world
+        self.world_creator = create_simple_world
+        #self.world_creator = create_random_world
         # self.world_creator = create_simple_world_2
         # self.world_creator = create_simple_world_3
         # self.world_creator = create_random_world2
 
-        aspect_ratio = 16.0 / 9.0
-        self.x_size = X_SIZE
-        self.y_size = int(X_SIZE / aspect_ratio)
-
-        self.samples_per_pixel = SAMPLES_PER_PIXEL
-        self.max_depth = MAX_DEPTH
+        self.y_size = int(self.x_size / self.aspect_ratio)
 
         viewport_height = 2.0
-        viewport_width = aspect_ratio * viewport_height
+        viewport_width = self.aspect_ratio * viewport_height
         focal_length = 1.0
-        self.chunk_size = CHUNK_SIZE
 
-        # self.look_from = Vec3(13, 2, 3)
-        self.look_from = Vec3(2, 2, 13)
+        self.look_from = Vec3(13, 2, 3)
+        #self.look_from = Vec3(2, 2, 13)
         self.look_at = Vec3(0, 0, 0)
         self.vup = Vec3(0, 1, 0)
         self.fd = 10.0
@@ -178,7 +193,7 @@ class App(tk.Frame):
 
     def create_frame_buffer(self):
         # print(f'create_frame_buffer called')
-        self.fb = FrameBuffer(X_SIZE, self.y_size, np.int8, 'rgb')
+        self.fb = FrameBuffer(self.x_size, self.y_size, np.int8, 'rgb')
         # self.pil_image = Image.new(mode="RGB", size=(X_SIZE, Y_SIZE), color=(128,128,128))
         # self.image = ImageTk.PhotoImage(self.pil_image)
         # self.canvas.create_image(X_SIZE, Y_SIZE, image=self.image)
@@ -394,7 +409,7 @@ class App(tk.Frame):
         chunk_num = 1
 
         try:
-            if RANDOM_CHUNKS is True:
+            if self.random_chunks is True:
                 chunk_list = [ (i*self.chunk_size, j*self.chunk_size) for j in range(y_chunks) for i in range(x_chunks)]
                 shuffle(chunk_list)
 
@@ -423,6 +438,7 @@ class App(tk.Frame):
 
 
 if __name__ == '__main__':
+    dotenv.load_dotenv()
     app = App()
     app.run_gui()
 
