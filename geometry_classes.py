@@ -25,6 +25,10 @@ DEFAULT_FOV = 90.0
 MaterialReturn = namedtuple("MaterialReturn", "more scattered attenuation")
 
 
+def lerp(low_val, high_val, a):
+    # linear interpolation -- a (0.0-1.0) * interval[low_val, high_val]
+    return a*(high_val-low_val) + low_val
+
 def degrees_to_radians(degrees: float):
     return degrees * math.pi / 180
 
@@ -212,7 +216,6 @@ class Vec3():
 
 class Camera():
     def __init__(self, look_from: Vec3, look_at: Vec3, vup: Vec3, vert_fov: float=DEFAULT_FOV,
-                 # aspect_ratio: float=DEFAULT_ASPECT_RATIO, aperature:float=0.0, focus_dist:float=10):
                  aspect_ratio: float=DEFAULT_ASPECT_RATIO, aperature:float=0.0, focus_dist:float=math.inf):
         self.origin = look_from
         self.look_at = look_at
@@ -331,7 +334,7 @@ class AABB():
             tmin = t0 if t0 > tmin else tmin
             tmax = t1 if t1 < tmax else tmax
 
-            if tmax <= tmin:
+            if tmax < tmin:
                 return False
 
         # check y slab
@@ -346,7 +349,7 @@ class AABB():
             tmin = t0 if t0 > tmin else tmin
             tmax = t1 if t1 < tmax else tmax
 
-            if tmax <= tmin:
+            if tmax < tmin:
                 return False
 
         # check z slab
@@ -361,7 +364,7 @@ class AABB():
             tmin = t0 if t0 > tmin else tmin
             tmax = t1 if t1 < tmax else tmax
 
-            if tmax <= tmin:
+            if tmax < tmin:
                 return False
 
         return True

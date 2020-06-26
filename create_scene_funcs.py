@@ -9,10 +9,14 @@ Len Wanger -- 2020
 """
 
 from random import random, uniform
-from geometry_classes import Vec3, GeometryList, Scene
+
+from pathlib import Path
+from PIL import Image
+
+from geometry_classes import Vec3, GeometryList, Scene, Camera
 from geometry_classes import random_on_unit_sphere
 from material_classes import Lambertian, Metal, Dielectric
-from texture_classes import SolidColor, CheckerBoard
+from texture_classes import SolidColor, CheckerBoard, ImageTexture
 from primitives_classes import Sphere, Plane, Triangle
 
 
@@ -33,7 +37,11 @@ def create_simple_world():
     world.add(Sphere(Vec3(-1,0,-1),0.5, dielectric_1))
     world.add(Sphere(Vec3(-1,0,-1),-0.45, dielectric_1))  # hollow sphere
 
-    return Scene(world)
+    scene = Scene(world)
+    camera = Camera(look_from=Vec3(-0.5, 1, 5), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1,
+                    focus_dist=20)
+    return {'scene': scene, 'camera': camera}
+
 
 def create_simple_world_2():
     # use a plane instead of a big sphere!
@@ -55,7 +63,10 @@ def create_simple_world_2():
     world.add(plane_1)
     world.add(plane_2)
 
-    return Scene(world)
+    scene = Scene(world)
+    camera = Camera(look_from=Vec3(-0.5, 1, 10), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1,
+                    focus_dist=20)
+    return {'scene': scene, 'camera': camera}
 
 
 def create_simple_world_3():
@@ -91,7 +102,10 @@ def create_simple_world_3():
     plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0,-3,0), normal=Vec3(0,1,0), material=diffuse_3)
     world.add(plane_1)
 
-    return Scene(world)
+    scene = Scene(world)
+    # camera = Camera(look_from=Vec3(-0.5, 1, 13), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
+    camera = Camera(look_from=Vec3(1, 1, 13), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
+    return {'scene': scene, 'camera': camera}
 
 
 def create_random_world():
@@ -139,7 +153,9 @@ def create_random_world():
     material_3 = Metal(color_3, 0.0)
     world.add(Sphere(Vec3(4, 1, 0), 1.0, material_3))
 
-    return Scene(world)
+    scene = Scene(world)
+    camera = Camera(look_from=Vec3(13, 2, 3), look_at=Vec3(0, 0, 0), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
+    return {'scene': scene, 'camera': camera}
 
 
 def create_random_world2():
@@ -190,26 +206,151 @@ def create_random_world2():
                 triangle = Triangle(v0,v1,v2, material)
                 world.add(triangle)
 
-    return Scene(world)
+    scene = Scene(world)
+    camera = Camera(look_from=Vec3(13, 2, 3), look_at=Vec3(0, 0, 0), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
+    return {'scene': scene, 'camera': camera}
+
 
 def create_checkerboard_world():
     color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
-    # color_2 = SolidColor(Vec3(0.8, 0.8, 0))
-    color_3 = SolidColor(Vec3(0.8,0.6,0.2))
+    color_2 = SolidColor(Vec3(0.8,0.6,0.2))
 
     odd_color = SolidColor(Vec3(0.2,0.3,0.1))
     even_color = SolidColor(Vec3(0.9,0.9,0.9))
     checker_board = CheckerBoard(even_color, odd_color, spacing=3)
 
+    other_odd_color = SolidColor(Vec3(0.1, 0.1, 0.1))
+    other_even_color = SolidColor(Vec3(0.9, 0.1, 0.1))
+    checker_board_2 = CheckerBoard(other_even_color, other_odd_color, spacing=8)
+
     diffuse_1 = Lambertian(color_1, name="diffuse_1")
     diffuse_2 = Lambertian(checker_board, name="diffuse_checkerboard")
-    metal_1 = Metal(color_3, fuzziness=0.3, name="metal_1")
+    diffuse_3 = Lambertian(checker_board_2, name="diffuse_checkerboard_2")
+    metal_1 = Metal(color_2, fuzziness=0.3, name="metal_1")
     dielectric_1 = Dielectric(1.5, name="dielectric_1")
 
     world = GeometryList()
     world.add(Sphere(Vec3(0,0,-1), 0.5, diffuse_1))
-    world.add(Sphere(Vec3(0,-100.5,-1), 100, diffuse_2))
-    world.add(Sphere(Vec3(1,0,-1), 0.5, metal_1))
-    world.add(Sphere(Vec3(-1,0,-1),0.5, dielectric_1))
-    world.add(Sphere(Vec3(-1,0,-1),-0.45, dielectric_1))  # hollow sphere
-    return Scene(world)
+
+    v0 = Vec3(-2, 0.1, -2.5)
+    v1 = Vec3(2, 0.1, -2.5)
+    v2 = Vec3(0, 1.5, -2.0)
+
+    world.add(Triangle(v0, v1, v2, diffuse_3, uv0=(0.5,1), uv1=(1,0), uv2=(0,0)))
+
+    plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0, -3, 0), normal=Vec3(0, 1, 0), material=diffuse_2)
+    world.add(plane_1)
+
+    world.add(Sphere(Vec3(1.2,0,-1), 0.5, metal_1))
+    world.add(Sphere(Vec3(-1.2,0,-1),0.5, dielectric_1))
+    world.add(Sphere(Vec3(-1.2,0,-1),-0.45, dielectric_1))  # hollow sphere
+
+    scene = Scene(world)
+    camera = Camera(look_from=Vec3(-0.5, 1, 5), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=30)
+    return {'scene': scene, 'camera': camera}
+
+
+def create_checkerboard_world_2():
+    odd_color = SolidColor(Vec3(0.2,0.3,0.1))
+    even_color = SolidColor(Vec3(0.9,0.9,0.9))
+    checker_board = CheckerBoard(even_color, odd_color, spacing=3)
+
+    diffuse_1 = Lambertian(checker_board, name="diffuse_checkerboard")
+    metal_1 = Metal(checker_board, fuzziness=0.1, name="metal_checkerboard")
+
+    world = GeometryList()
+    world.add(Sphere(Vec3(0,-10,0), 10, diffuse_1))
+    world.add(Sphere(Vec3(0,10,0), 10, metal_1))
+
+    scene = Scene(world)
+    camera = Camera(look_from=Vec3(-0.5, 1, 15), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20)
+
+    return {'scene': scene, 'camera': camera}
+
+
+def create_image_texture_world():
+    silver = SolidColor(Vec3(0.7, 0.7, 0.7))
+
+    image_1 = Image.open(Path("./textures/earthlights_dmsp_big.jpg"))
+    image_2 = Image.open(Path("./textures/george harrison (1 bit).bmp"))
+    image_texture_1 = ImageTexture(image_1, "earthlights")
+
+    odd_color = ImageTexture(image_2)
+    even_color = SolidColor(Vec3(0.1, 0.1, 0.1))
+    checker_board = CheckerBoard(even_color, odd_color, spacing=3)
+
+    diffuse_1 = Lambertian(image_texture_1, name="diffuse_1")
+    diffuse_2 = Lambertian(checker_board, name="checkerboard")
+    metal_1 = Metal(silver, name="metal_1")
+
+    world = GeometryList()
+
+    world.add(Sphere(Vec3(-0.75, 0, -1), 1.0, diffuse_1))
+    world.add(Sphere(Vec3(1.5, 0, -2.25), 1.0, metal_1))
+
+    plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0, -3, 0), normal=Vec3(0, 1, 0), material=diffuse_2)
+    world.add(plane_1)
+
+    scene = Scene(world)
+    camera = Camera(look_from=Vec3(-0.5, 1, 7), look_at=Vec3(0, 0, -0.5), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
+
+    return {'scene': scene, 'camera': camera}
+
+
+def create_canonical_1():
+    """
+    debug:
+        - only half of checkerboard showingup
+        - no io_logo image showing up on checkerboard
+        X reflection on sphere in wrong place?
+    """
+    silver = SolidColor(Vec3(0.7, 0.7, 0.7))
+
+    # image_1 = Image.open(Path("./textures/earthlights_dmsp_big.jpg"))
+    image_2 = Image.open(Path("./textures/IO_logo.png"))
+    # image_texture_1 = ImageTexture(image_1, "earthlights")
+
+    logo = ImageTexture(image_2)  # images are across the entire checkerboard, not a single square?
+
+    # odd_color = ImageTexture(image_2)  # images are across the entire checkerboard, not a single square?
+    odd_color = SolidColor(Vec3(0.2, 0.75, 0.2))
+    even_color = SolidColor(Vec3(0.1, 0.1, 0.1))
+    checker_board = CheckerBoard(even_color, odd_color, spacing=2.0)
+
+    if False:  # use checkerboard vs image texture
+        diffuse_2 = Lambertian(checker_board, name="checkerboard")
+    else:
+        diffuse_2 = Lambertian(logo, name="io_logo'")
+
+    metal_1 = Metal(silver, name="metal_1")
+
+    world = GeometryList()
+
+    world.add(Sphere(Vec3(0, 1.25, 0.35), 1.0, metal_1))
+
+    if False:  # use plane vs triangles
+        plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0, -1, 0), normal=Vec3(0, 1, 0), material=diffuse_2)
+        world.add(plane_1)
+    else:
+        plane_x = 2
+        plane_y = -1
+        back_plane_z = -2
+        front_plane_z = 3
+        v0 = Vec3(-plane_x, plane_y, front_plane_z)
+        uv0 = (0,0)
+        v1 = Vec3(-plane_x ,plane_y,back_plane_z)
+        uv1 = (0, 1)
+        v2 = Vec3(plane_x, plane_y, front_plane_z)
+        uv2 = (1, 0)
+        v3 = Vec3(plane_x, plane_y,back_plane_z)
+        uv3 = (1, 1)
+        triangle = Triangle(v0, v1, v2, diffuse_2, uv0, uv1, uv2)
+        world.add(triangle)
+
+        triangle = Triangle(v1, v2, v3, diffuse_2, uv1, uv2, uv3)
+        world.add(triangle)
+
+    scene = Scene(world)
+    camera = Camera(look_from=Vec3(8.5, 4, 0), look_at=Vec3(0, 1, 0), vup=Vec3(0, 1, 0), vert_fov=25)
+
+    return {'scene': scene, 'camera': camera}

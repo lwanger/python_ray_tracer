@@ -34,7 +34,6 @@ class Material(ABC):
 
 
 def reflect(v: Vec3, n: Vec3):
-    # return v - n*2*dot(v,n)
     return v - n.mul_val(2*dot(v,n))
 
 
@@ -54,7 +53,6 @@ def refract(uv: Vec3, n: Vec3, etai_over_etat: float):
 
 
 class Lambertian(Material):
-    # def __init__(self, color: Vec3, name=None):
     def __init__(self, a: Texture, name=None):
         super().__init__(name)
         self.albedo = a
@@ -76,10 +74,8 @@ class Lambertian(Material):
 
 
 class Metal(Material):
-    # def __init__(self, color: Vec3, fuzziness:float=1.0, name=None):
-    def __init__(self, a: Texture, fuzziness:float=1.0, name=None):
+    def __init__(self, a: Texture, fuzziness:float=0.0, name=None):
         super().__init__(name)
-        # self.albedo = color
         self.albedo = a
         if fuzziness > 1.0:
             self.fuzziness = 1.0
@@ -95,9 +91,7 @@ class Metal(Material):
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         unit_vector = ray_in.direction.unit_vector()
         reflected = reflect(unit_vector, hr.normal)
-        # scattered = Ray(hr.point, reflected + random_in_unit_sphere()*self.fuzziness)
         scattered = Ray(hr.point, reflected + random_in_unit_sphere().mul_val(self.fuzziness))
-        # attenuation = self.albedo
         attenuation = self.albedo.value(hr.u, hr.v, hr.point)
         more = dot(scattered.direction, hr.normal) > 0
         return MaterialReturn(more, scattered, attenuation)

@@ -2,6 +2,14 @@
 GUI on top of the ray tracer
 
 TODO:
+    - add ambient light and background color
+    - simple_world_3 - triangles go away if look_at.x goes from -0.5 to 1.0, or y from 1.0 to 2.0
+    - setting u,v on checkerboard squares?
+    - set position of image on sphere (where u,v starts so can orient picture)
+    - double-sided polys and back-side materials?
+    - sizing on checkboard (sizing -- lower is bigger squares).
+    - checkerboard wonk when crossing 0's?
+TODO:
     - update canvas paste a chunk
     - asyncio?
     - add settings dialog (image_name, size, aspect ratio, chunk size, # of worked, samples_per_pixel, max depth)
@@ -18,6 +26,7 @@ can use the following environment variables (or stored in .env file):
     MAX_DEPTH: maximum depth of bounces per pixel
     CHUNK_SIZE: size of chunks to calculate (e.g. value of 10 is 10x10 pixel blocks)
     RANDOM_CHUNKS: whether rendered chunks are in order or random (True - default)
+    IMAGE_FILENAME: the file name to use to save the image
 
 Len Wanger, copyright 2020
 """
@@ -47,7 +56,17 @@ res_settings = {
         'ultra': { 'x_size': 1024, 'chunk_size': 25, 'samples_per_pixel': 100, 'max_depth': 50 },
 }
 
-FOV = 20
+
+# CREATOR_FUNC = create_simple_world
+# CREATOR_FUNC = create_random_world
+# CREATOR_FUNC = create_simple_world_2
+# CREATOR_FUNC = create_simple_world_3
+CREATOR_FUNC = create_random_world2
+# CREATOR_FUNC = create_checkerboard_world
+# CREATOR_FUNC = create_checkerboard_world_2
+# CREATOR_FUNC = create_image_texture_world
+# CREATOR_FUNC = create_canonical_1
+
 
 # messages from GUI
 CANCEL_MSG = 100
@@ -115,6 +134,7 @@ class App(tk.Frame):
         self.chunk_size = int(env_or_defaults('CHUNK_SIZE', res_setting['chunk_size']))
         self.samples_per_pixel = int(env_or_defaults('SAMPLES_PER_PIXEL', res_setting['samples_per_pixel']))
         self.max_depth = int(env_or_defaults('MAX_DEPTH', res_setting['max_depth']))
+        self.image_filename = env_or_defaults('IMAGE_FILENAME', 'rt_gui.png')
 
         if env_or_defaults('RANDOM_CHUNKS', True) in {'0', 'False', 'FALSE', 'false', 'no', 'No', 'NO'}:
             self.random_chunks = False
@@ -124,26 +144,13 @@ class App(tk.Frame):
         # self.gui_pipe_conn, self.worker_pipe_conn = Pipe()
         # self.worker = None
 
-        # self.world_creator = create_simple_world
-        # self.world_creator = create_random_world
-        # self.world_creator = create_simple_world_2
-        # self.world_creator = create_simple_world_3
-        # self.world_creator = create_random_world2
-        self.world_creator = create_checkerboard_world
+        self.world_creator = CREATOR_FUNC
 
         self.y_size = int(self.x_size / self.aspect_ratio)
 
         viewport_height = 2.0
         viewport_width = self.aspect_ratio * viewport_height
         focal_length = 1.0
-
-        self.look_from = Vec3(13, 2, 3)
-        #self.look_from = Vec3(2, 2, 13)
-        self.look_at = Vec3(0, 0, 0)
-        self.vup = Vec3(0, 1, 0)
-        self.fd = 10.0
-        self.aperature = 0.1
-        self.fov = 20
 
         self.origin = Vec3(0.0, 0.0, 0.0)
         self.horizontal = Vec3(viewport_width, 0, 0)
@@ -219,7 +226,7 @@ class App(tk.Frame):
     def save_image(self):
         img = self.fb.make_image()
         # show_image(img)
-        save_image(img, "rt_gui.png")
+        save_image(img, self.image_filename)
         self.image_saved = True
 
 
@@ -282,11 +289,14 @@ class App(tk.Frame):
         self.status_str.set(f'start_render called')
         self.root.update_idletasks()
 
-        self.camera = Camera(self.look_from, self.look_at, self.vup, self.fov, aperature=self.aperature, focus_dist=self.fd)
+        # self.camera = Camera(self.look_from, self.look_at, self.vup, self.fov, aperature=self.aperature, focus_dist=self.fd)
         self.status_str.set(f'creating world...')
         self.root.update_idletasks()
 
-        self.world = self.world_creator()
+        world = self.world_creator()
+        self.world = world['scene']
+        self.camera = world['camera']
+
         self.create_frame_buffer()
         self.render_cancelled = False
         self.status_str.set(f'render started')
