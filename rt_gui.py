@@ -35,38 +35,29 @@ from multiprocessing import Process, Pipe
 
 from datetime import datetime
 import numpy as np
-import os
-from random import random, uniform, shuffle
+from random import shuffle
 import tkinter as tk
 
 import dotenv
 from PIL import Image, ImageTk
 
-from rt import render_chunk
+from rt import render_chunk, get_render_settings
+
 from framebuffer import FrameBuffer, save_image, show_image
-from geometry_classes import Vec3, Ray, Camera
+from geometry_classes import Vec3
 
-from material_classes import ray_color
 from create_scene_funcs import *
-
-
-res_settings = {
-        'low': { 'x_size': 100, 'chunk_size': 10, 'samples_per_pixel': 10, 'max_depth': 10 },
-        'med': { 'x_size': 200, 'chunk_size': 25, 'samples_per_pixel': 25, 'max_depth': 20 },
-        'high': { 'x_size': 384, 'chunk_size': 25, 'samples_per_pixel': 50, 'max_depth': 25 },
-        'ultra': { 'x_size': 1024, 'chunk_size': 25, 'samples_per_pixel': 100, 'max_depth': 50 },
-}
 
 
 # CREATOR_FUNC = create_simple_world
 # CREATOR_FUNC = create_random_world
 # CREATOR_FUNC = create_simple_world_2
 # CREATOR_FUNC = create_simple_world_3
-CREATOR_FUNC = create_random_world2
+# CREATOR_FUNC = create_random_world2
 # CREATOR_FUNC = create_checkerboard_world
 # CREATOR_FUNC = create_checkerboard_world_2
 # CREATOR_FUNC = create_image_texture_world
-# CREATOR_FUNC = create_canonical_1
+CREATOR_FUNC = create_canonical_1
 
 
 # messages from GUI
@@ -120,43 +111,28 @@ def render_worker(start, end, pipe_conn):
         # send_gui_message(pipe_conn, CANCELLED_MSG, None)
         pass
 
-def env_or_defaults(var_name, def_val):
-    try:
-        return os.environ[var_name]
-    except KeyError:
-        return def_val
 
 class App(tk.Frame):
     def __init__(self):
-        use_res = env_or_defaults('USE_RES', 'med').lower()
-        res_setting = res_settings[use_res]
-        self.x_size = int(env_or_defaults('X_SIZE', res_setting['x_size']))
-        self.aspect_ratio = eval(env_or_defaults('ASPECT_RATIO', '16/9'))
-        self.chunk_size = int(env_or_defaults('CHUNK_SIZE', res_setting['chunk_size']))
-        self.samples_per_pixel = int(env_or_defaults('SAMPLES_PER_PIXEL', res_setting['samples_per_pixel']))
-        self.max_depth = int(env_or_defaults('MAX_DEPTH', res_setting['max_depth']))
-        self.image_filename = env_or_defaults('IMAGE_FILENAME', 'rt_gui.png')
-
-        if env_or_defaults('RANDOM_CHUNKS', True) in {'0', 'False', 'FALSE', 'false', 'no', 'No', 'NO'}:
-            self.random_chunks = False
-        else:
-            self.random_chunks = True
+        settings = get_render_settings()
+        self.x_size = settings['x_size']
+        self.aspect_ratio = settings['aspect_ratio']
+        self.chunk_size = settings['chunk_size']
+        self.samples_per_pixel = settings['samples_per_pixel']
+        self.max_depth = settings['max_depth']
+        self.image_filename = settings['image_filename']
+        self.random_chunks = settings['random_chunks']
 
         # self.gui_pipe_conn, self.worker_pipe_conn = Pipe()
         # self.worker = None
 
+        self.y_size = settings['y_size']
+        self.origin = settings['origin']
+        self.horizontal = settings['horizontal']
+        self.vertical = settings['vertical']
+        self.lower_left = settings['lower_left']
+
         self.world_creator = CREATOR_FUNC
-
-        self.y_size = int(self.x_size / self.aspect_ratio)
-
-        viewport_height = 2.0
-        viewport_width = self.aspect_ratio * viewport_height
-        focal_length = 1.0
-
-        self.origin = Vec3(0.0, 0.0, 0.0)
-        self.horizontal = Vec3(viewport_width, 0, 0)
-        self.vertical = Vec3(0, viewport_height, 0)
-        self.lower_left = self.origin - self.horizontal.div_val(2) - self.vertical.div_val(2) - Vec3(0, 0, focal_length)
 
         self.create_gui()
         self.start_button_start = True  # False, means it's changed to cancel button
@@ -290,8 +266,7 @@ class App(tk.Frame):
         self.status_str.set(f'start_render called')
         self.root.update_idletasks()
 
-        # self.camera = Camera(self.look_from, self.look_at, self.vup, self.fov, aperature=self.aperature, focus_dist=self.fd)
-        self.status_str.set(f'creating world...')
+        self.status_str.set(f'gcreating world...')
         self.root.update_idletasks()
 
         world = self.world_creator()
@@ -434,7 +409,3 @@ if __name__ == '__main__':
     dotenv.load_dotenv()
     app = App()
     app.run_gui()
-
-
-if __name__ == '__main__':
-    pass
