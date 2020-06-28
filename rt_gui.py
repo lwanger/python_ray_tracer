@@ -42,6 +42,7 @@ import tkinter as tk
 import dotenv
 from PIL import Image, ImageTk
 
+from rt import render_chunk
 from framebuffer import FrameBuffer, save_image, show_image
 from geometry_classes import Vec3, Ray, Camera
 
@@ -385,27 +386,6 @@ class App(tk.Frame):
         self.root.update_idletasks()
 
 
-    def render_chunk(self, l:int, b:int, r: int, t: int):
-        use_r = min(r, self.x_size)
-        use_t = min(t, self.y_size)
-        # print(f'l={l}, r={r}, b={b}, t={t}, use_r={use_r}, use_t={use_t}')
-
-        for j in range(b, use_t):
-            for i in range(l, use_r):
-                pixel_color = Vec3(0, 0, 0)
-
-                for s in range(self.samples_per_pixel):
-                    if self.render_cancelled is True:
-                        raise RenderCanceledException
-
-                    u = (i + random()) / (self.x_size - 1)
-                    v = (j + random()) / (self.y_size - 1)
-                    ray = self.camera.get_ray(u, v)
-                    pixel_color += ray_color(ray, self.world, self.max_depth)
-
-                self.fb.set_pixel(i, j, pixel_color.get_unscaled_color(), self.samples_per_pixel)
-
-
     def render(self):
         start_time = datetime.now()
         x_chunks, r = divmod(self.x_size, self.chunk_size)
@@ -427,7 +407,8 @@ class App(tk.Frame):
                 for l,b in chunk_list:
                     r = l + self.chunk_size
                     t = b + self.chunk_size
-                    self.render_chunk(l, b, r, t)
+                    render_chunk(self.world, self.camera, self.fb, self.x_size, self.y_size,
+                                 l, b, r, t, self.samples_per_pixel, self.max_depth)
                     self.update_canvas(l, b, chunk_num, total_chunks)
                     chunk_num += 1
             else:
@@ -437,7 +418,8 @@ class App(tk.Frame):
                         r = l + self.chunk_size
                         b = j*self.chunk_size
                         t = b + self.chunk_size
-                        self.render_chunk(l, b, r, t)
+                        render_chunk(self.world, self.camera, self.fb, self.x_size, self.y_size,
+                                     l, b, r, t, self.samples_per_pixel, self.max_depth)
                         self.update_canvas(l, b, chunk_num, total_chunks)
                         chunk_num += 1
 
