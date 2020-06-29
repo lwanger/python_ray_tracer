@@ -14,7 +14,7 @@ TODO:
 import math
 from typing import Optional
 
-from geometry_classes import Vec3, Ray, Geometry, HitRecord, AABB, dot, cross
+from geometry_classes import Vec3, Ray, Geometry, GeometryList, BVHNode, HitRecord, AABB, dot, cross
 from material_classes import Material
 
 EPSILON = 1e-15
@@ -201,13 +201,14 @@ class Plane(Geometry):
 
 
 class Triangle(Geometry):
-    def __init__(self, v0: Vec3, v1: Vec3, v2: Vec3, material: Material, uv0=None, uv1=None, uv2=None):
+    def __init__(self, v0: Vec3, v1: Vec3, v2: Vec3, material: Material, uv0=None, uv1=None, uv2=None, normal: Vec3=None):
         """
 
         :param v0: point 0 of the triangle (Vec3)
         :param v1: point 1 of the triangle (Vec3)
         :param v2: point 2 of the triangle (Vec3)
         :param material: material for the triangle (Material)
+        :param normal: normal for the triangle (Vec3). If none, calculated from the vertices
         :param uv0: u,v coordinates for v0 (only used if material.uv_used is True)
         :param uv1: u,v coordinates for v1 (only used if material.uv_used is True)
         :param uv2: u,v coordinates for v2 (only used if material.uv_used is True)
@@ -218,7 +219,12 @@ class Triangle(Geometry):
         self.v2 = v2
         v0v1 = v1 - v0
         v0v2 = v2 - v0
-        self.normal = cross(v0v1, v0v2).normalize()
+
+        if normal is None:
+            self.normal = cross(v0v1, v0v2).normalize()
+        else:
+            self.normal = normal.normalize()
+
         self.inverse_normal = -self.normal  # pre-compute for hit testing
 
         if material.uv_used:
@@ -330,6 +336,54 @@ class Triangle(Geometry):
         return hr
 
 
+class STLMesh(Geometry):
+    def __init__(self, mesh, material: Material, name='unnamed'):
+        # make a triangle mesh from an array provided by numpy.stl
+        super().__init__(material)
+        self.name = name
+
+        # compute bounding box
+        min_x = mesh.x.min()
+        min_y = mesh.y.min()
+        min_z = mesh.z.min()
+        max_x = mesh.x.max()
+        max_y = mesh.y.max()
+        max_z = mesh.z.max()
+        vmin = Vec3(min_x,min_y,min_z)
+        vmax = Vec3(max_x,max_y,max_z)
+        self.bbox = AABB(vmin, vmax)
+        self.num_triangles = mesh.points.shape[0]
+
+        # make bvh for the mesh
+        geom_list = GeometryList()
+        for i in range(mesh.points.shape[0]):
+            v0 = Vec3(*mesh.points[i][0:3].tolist())
+            v1 = Vec3(*mesh.points[i][3:6].tolist())
+            v2 = Vec3(*mesh.points[i][6:9].tolist())
+            n = Vec3(*mesh.normals[i].tolist())
+            t = Triangle(v0,v1,v2,material, normal=n)
+            geom_list.add(t)
+        self.bvh = BVHNode(geom_list)
+
+    def __repr__(self):
+        return f'STLMesh(name={self.name}, num_triangles={self.num_triangles},  material={self.material})'
+
+    def has_bbox(self) -> bool:
+        return True
+
+    def bounding_box(self, t0: float, t1: float) -> AABB:
+        return self.bbox
+
+    def get_uv(self, p: Vec3):
+        # not supported on STL mesh object, just return a default value
+        return (0,0)
+
+    def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
+        # hit is just the hit of the bvh
+        hr = self.bvh.hit(ray, t_min, t_max)
+        return hr
+
+
 if __name__ == '__main__':
     v1 = Vec3(1.0, 2.0, 3.0)
     v2 = Vec3(4.0, 5.0, 6.0)
@@ -366,4 +420,3 @@ if __name__ == '__main__':
     print(f'ray1.at(0.0)={ray1.at(0.0)}')
     print(f'ray1.at(0.5)={ray1.at(0.5)}')
     print(f'ray1.at(1.0)={ray1.at(1.0)}')
-

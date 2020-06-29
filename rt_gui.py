@@ -3,12 +3,10 @@ GUI on top of the ray tracer
 
 TODO:
     - add ambient light and background color
-    - simple_world_3 - triangles go away if look_at.x goes from -0.5 to 1.0, or y from 1.0 to 2.0
     - setting u,v on checkerboard squares?
     - set position of image on sphere (where u,v starts so can orient picture)
     - double-sided polys and back-side materials?
     - sizing on checkboard (sizing -- lower is bigger squares).
-    - checkerboard wonk when crossing 0's?
 TODO:
     - update canvas paste a chunk
     - asyncio?
@@ -57,7 +55,8 @@ from create_scene_funcs import *
 # CREATOR_FUNC = create_checkerboard_world
 # CREATOR_FUNC = create_checkerboard_world_2
 # CREATOR_FUNC = create_image_texture_world
-CREATOR_FUNC = create_canonical_1
+# CREATOR_FUNC = create_canonical_1
+CREATOR_FUNC = create_stl_mesh
 
 
 # messages from GUI
@@ -266,7 +265,7 @@ class App(tk.Frame):
         self.status_str.set(f'start_render called')
         self.root.update_idletasks()
 
-        self.status_str.set(f'gcreating world...')
+        self.status_str.set(f'creating world...')
         self.root.update_idletasks()
 
         world = self.world_creator()

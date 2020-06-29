@@ -130,10 +130,10 @@ class Vec3():
         self.z = z
 
     def __repr__(self):
-        return f'Vec3({self.x}, {self.y}, {self.z})'
+        return f'Vec3({self.x:0.3f}, {self.y:0.3f}, {self.z:0.3f})'
 
     def __str__(self):
-        return f'({self.x}, {self.y}, {self.z})'
+        return f'({self.x:0.3f}, {self.y:0.3f}, {self.z:0.3f})'
 
     def __neg__(self):
         return Vec3(-self.x, -self.y, -self.z)
@@ -428,8 +428,7 @@ class GeometryList():
 
         for geom in self.list:
             bbox = geom.bounding_box(t0, t1)
-            # if bbox is None:
-            #     return False
+
             if temp_box is None:
                 output_box = bbox
             else:
@@ -532,9 +531,10 @@ class BVHNode(Geometry):
                     geom_list = GeometryList(has_bbox_list)
                     self.right = BVHNode(geom_list, time0, time1)
         else:  # len(no_bbox_list) == 0
-            axis = randint(0,2)
-            comparators = {0: box_x_compare, 1: box_y_compare, 2: box_z_compare}
-            comparator = comparators[axis]
+            if len(has_bbox_list) > 1:
+                axis = randint(0,2)
+                comparators = {0: box_x_compare, 1: box_y_compare, 2: box_z_compare}
+                comparator = comparators[axis]
 
             if len(has_bbox_list) == 1:
                 self.left = has_bbox_list[0]
@@ -552,11 +552,10 @@ class BVHNode(Geometry):
             else:
                 has_bbox_list.sort(key=comparator)
                 mid = len(has_bbox_list) // 2
-                geom_list = GeometryList(has_bbox_list[:mid])
-                self.left = BVHNode(geom_list, time0, time1)
-                geom_list = GeometryList(has_bbox_list[mid:])
-                self.right = BVHNode(geom_list, time0, time1)
-
+                geom_list_left = GeometryList(has_bbox_list[:mid])
+                self.left = BVHNode(geom_list_left, time0, time1)
+                geom_list_right = GeometryList(has_bbox_list[mid:])
+                self.right = BVHNode(geom_list_right, time0, time1)
 
             right_bbox = None
             left_bbox = self.left.bounding_box(time0, time1)
@@ -564,7 +563,6 @@ class BVHNode(Geometry):
                 right_bbox = self.right.bounding_box(time0, time1)
 
             self.bbox = surrounding_box(left_bbox, right_bbox)
-
 
     def __repr__(self):
         return(f'BVHNode(left={type(self.left)}, right={type(self.right)}, bbox={self.bbox})')
@@ -589,7 +587,6 @@ class BVHNode(Geometry):
         hit_right = self.right.hit(ray, t_min, t_max)
 
         # return [lst for lst in (hit_left, hit_right) if lst is not None]
-
         if hit_left is None:
             return hit_right
         elif hit_right is None:
@@ -599,7 +596,6 @@ class BVHNode(Geometry):
                 return hit_left
             else:
                 return hit_right
-
 
 
 class Scene():

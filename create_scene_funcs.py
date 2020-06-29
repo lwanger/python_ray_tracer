@@ -8,16 +8,19 @@ https://raytracing.github.io/books/RayTracingInOneWeekend.html
 Len Wanger -- 2020
 """
 
+import math
 from random import random, uniform
 
 from pathlib import Path
 from PIL import Image
 
+from stl import mesh  # numpy-stl
+
 from geometry_classes import Vec3, GeometryList, Scene, Camera
 from geometry_classes import random_on_unit_sphere
 from material_classes import Lambertian, Metal, Dielectric
 from texture_classes import SolidColor, CheckerBoard, ImageTexture
-from primitives_classes import Sphere, Plane, Triangle
+from primitives_classes import Sphere, Plane, Triangle, STLMesh
 
 
 def create_simple_world():
@@ -352,5 +355,166 @@ def create_canonical_1():
 
     scene = Scene(world)
     camera = Camera(look_from=Vec3(8.5, 4, 0), look_at=Vec3(0, 1, 0), vup=Vec3(0, 1, 0), vert_fov=25)
+
+    return {'scene': scene, 'camera': camera}
+
+
+# def scale(np, x, out_range=(-1, 1), axis=None):
+#     domain = np.min(x, axis), np.max(x, axis)
+#     y = (x - (domain[1] + domain[0]) / 2) / (domain[1] - domain[0])
+#     return y * (out_range[1] - out_range[0]) + (out_range[1] + out_range[0]) / 2
+
+
+def create_stl_mesh():
+    """
+    TODO:
+        scale the model
+    """
+    silver = SolidColor(Vec3(0.7, 0.7, 0.7))
+    green = SolidColor(Vec3(0.1, 0.5, 0.1))
+    blue = SolidColor(Vec3(0.1, 0.1, 0.5))
+    red = SolidColor(Vec3(0.5, 0.1, 0.1))
+    purple = SolidColor(Vec3(0.4, 0.1, 0.4))
+    gray = SolidColor(Vec3(0.2, 0.2, 0.2))
+    light_gray = SolidColor(Vec3(0.9, 0.9, 0.9))
+    dark_gray = SolidColor(Vec3(0.1, 0.1, 0.1))
+    black = SolidColor(Vec3(0.0, 0.0, 0.0))
+
+    # stl_filename = "models/sauce_ramp_v2.stl"  # vmin=(-1.60, -0.69, 0.0), vmax=(0.97, 0.69, 1.19)
+    # settings = {'look_from': Vec3(0.0, 2, 5), 'look_at': Vec3(0, 0.0, 0),
+    #     'plane_x': 5, 'plane_y': -2, 'back_plane_z': -3, 'front_plane_z': 3,
+    #     'rot_axis': [0.0, 0.5, 0.0], 'rot_rads': math.radians(90), 'show_walls': False}
+
+    # stl_filename ="models/LRW pick (plate stiffener).stl" # vmin=(-365.174, -471.391, 12.700), vmax=(365.313, 341.873, 50.800)
+    # setting not right yet!
+    # settings = {'look_from': Vec3(0.0, 2, 300), 'look_at': Vec3(0, 0.0, 0),
+    #             'plane_x': 400, 'plane_y': -500, 'back_plane_z': 0, 'front_plane_z': 60,
+    #             'rot_axis': None, 'rot_rads': None, 'show_walls': False}
+
+    stl_filename ="models/gyroid_20mm.stl"
+    # settings = {'look_from': Vec3(0.0, 4, 60), 'look_at': Vec3(0, 0.0, 0),
+    settings = {'look_from': Vec3(-10.0, 25, 60), 'look_at': Vec3(0, 0.0, 0),
+                # 'plane_x': 15, 'plane_y': -13, 'back_plane_z': -15, 'front_plane_z': 15,
+                'plane_x': 25, 'plane_y': -15, 'back_plane_z': -20, 'front_plane_z': 15,
+                'rot_axis': None, 'rot_rads': None, 'show_walls': True}
+
+    # stl_filename ="models/modern_hexagon_revisited.stl"
+    # stl_filename ="models/bar_6mm.stl"
+    # settings = {'look_from': Vec3(50, 25, 50), 'look_at': Vec3(0, 0.5, 0),
+    #             'plane_x': 20, 'plane_y': -5, 'back_plane_z': -50, 'front_plane_z': 50, }
+
+    image_2 = Image.open(Path("./textures/IO_logo.png"))
+    logo = ImageTexture(image_2)  # images are across the entire checkerboard, not a single square?
+
+    checked = CheckerBoard(dark_gray, light_gray, spacing=0.5)
+
+    metal_1 = Metal(silver, name="metal_1")
+
+    # diffuse_2 = Lambertian(logo, name="io_logo'")
+    diffuse_2 = Lambertian(gray, name="gray'")
+
+    object_matl = metal_1
+
+    # ground = Lambertian(green, name="green'")
+    # ground = Lambertian(logo, name="gray'")
+    ground = Lambertian(checked, name="gray'")
+    # right_wall = Lambertian(red, name="red'")
+    right_wall = Lambertian(logo, name="red'")
+    # right_wall = metal_1
+    left_wall = Lambertian(blue, name="blue'")
+    # left_wall = metal_1
+    # back_wall = Lambertian(purple, name="purple'")
+    back_wall = metal_1
+
+    world = GeometryList()
+
+    # world.add(Sphere(Vec3(0, 1.25, 0.35), 1.0, metal_1))
+
+    if True:
+        plane_x = settings['plane_x']
+        plane_y = settings['plane_y']
+        back_plane_z = settings['back_plane_z']
+        front_plane_z = settings['front_plane_z']
+        v0 = Vec3(-plane_x, plane_y, front_plane_z)
+        uv0 = (0,0)
+        v1 = Vec3(-plane_x ,plane_y,back_plane_z)
+        uv1 = (0, 1)
+        v2 = Vec3(plane_x, plane_y, front_plane_z)
+        uv2 = (1, 0)
+        v3 = Vec3(plane_x, plane_y,back_plane_z)
+        uv3 = (1, 1)
+        triangle = Triangle(v0, v1, v2, ground, uv0, uv1, uv2)
+        world.add(triangle)
+
+        triangle = Triangle(v1, v2, v3, ground, uv1, uv2, uv3)
+        world.add(triangle)
+
+        height = 2 * plane_x
+
+        if settings['show_walls'] is True:
+            # right wall
+            v0 = Vec3(plane_x, plane_y, front_plane_z)
+            uv0 = (0, 0)
+            v1 = Vec3(plane_x, plane_y, back_plane_z)
+            uv1 = (0, 1)
+            v2 = Vec3(plane_x, plane_y+height, back_plane_z)
+            uv2 = (1, 0)
+            v3 = Vec3(plane_x, plane_y+height, front_plane_z)
+            uv3 = (1, 1)
+            triangle = Triangle(v0, v1, v2, right_wall, uv0, uv1, uv2)
+            world.add(triangle)
+
+            triangle = Triangle(v0, v2, v3, right_wall, uv1, uv2, uv3)
+            world.add(triangle)
+
+            # left wall
+            v0 = Vec3(-plane_x, plane_y, front_plane_z)
+            uv0 = (0, 0)
+            v1 = Vec3(-plane_x, plane_y, back_plane_z)
+            uv1 = (0, 1)
+            v2 = Vec3(-plane_x, plane_y + height, back_plane_z)
+            uv2 = (1, 0)
+            v3 = Vec3(-plane_x, plane_y + height, front_plane_z)
+            uv3 = (1, 1)
+            triangle = Triangle(v0, v1, v2, left_wall, uv0, uv1, uv2)
+            world.add(triangle)
+
+            triangle = Triangle(v0, v2, v3, left_wall, uv1, uv2, uv3)
+            world.add(triangle)
+
+            # back wall
+            v0 = Vec3(-plane_x, plane_y, back_plane_z)
+            uv0 = (0, 0)
+            v1 = Vec3(-plane_x, plane_y + height, back_plane_z)
+            uv1 = (0, 1)
+            v2 = Vec3(plane_x, plane_y + height, back_plane_z)
+            uv2 = (1, 0)
+            v3 = Vec3(plane_x, plane_y, back_plane_z)
+            uv3 = (1, 1)
+            triangle = Triangle(v0, v1, v2, back_wall, uv0, uv1, uv2)
+            world.add(triangle)
+
+            triangle = Triangle(v0, v2, v3, back_wall, uv1, uv2, uv3)
+            world.add(triangle)
+
+    my_mesh = mesh.Mesh.from_file(stl_filename)
+
+    if 'rot_axis' in settings and settings['rot_axis'] is not None:
+        rot_axis = settings['rot_axis']
+        rot_rads = settings['rot_rads']
+        my_mesh.rotate(rot_axis, rot_rads)
+
+    # stl_mesh = STLMesh(my_mesh, metal_1, name="mesh_1")
+    stl_mesh = STLMesh(my_mesh, object_matl, name="mesh_1")
+    print(f'stl_mesh {stl_filename} -- bbox={stl_mesh.bounding_box(None, None)}, num_triangles={stl_mesh.num_triangles}')
+    world.add(stl_mesh)
+
+    scene = Scene(world)
+
+    # camera = Camera(look_from=Vec3(8.5, 4, 0), look_at=Vec3(0, 1, 0), vup=Vec3(0, 1, 0), vert_fov=25)
+    # camera = Camera(look_from=Vec3(12, 3, 0), look_at=Vec3(0, 0.5, 0), vup=Vec3(0, 1, 0), vert_fov=25)
+    look_from = settings['look_from']
+    look_at = settings['look_at']
+    camera = Camera(look_from=look_from, look_at=look_at, vup=Vec3(0, 1, 0), vert_fov=25)
 
     return {'scene': scene, 'camera': camera}

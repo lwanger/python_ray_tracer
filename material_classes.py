@@ -66,8 +66,6 @@ class Lambertian(Material):
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         scatter_direction = hr.normal + random_unit_vec3()
         scattered = Ray(hr.point, scatter_direction)
-
-        # attenuation = self.albedo
         attenuation = self.albedo.value(hr.u, hr.v, hr.point)
 
         return MaterialReturn(True, scattered, attenuation)
