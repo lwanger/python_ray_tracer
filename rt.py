@@ -13,7 +13,6 @@ import numpy as np
 from tqdm import tqdm
 
 from framebuffer import FrameBuffer, save_image
-# from geometry_classes import Vec3
 from material_classes import ray_color
 from create_scene_funcs import *
 

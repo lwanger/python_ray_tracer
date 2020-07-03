@@ -12,6 +12,7 @@ TODO:
 """
 
 import math
+from random import uniform
 from typing import Optional
 
 from geometry_classes import Vec3, Ray, Geometry, GeometryList, BVHNode, HitRecord, AABB, dot, cross
@@ -318,6 +319,128 @@ class Triangle(Geometry):
 
         ri = ray.origin + ray.direction.mul_val(t)
         vd = dot(self.normal, ray.direction) # faster way? Already computed?
+
+        if vd < 0:
+            rn = self.normal
+        else:
+            rn = self.inverse_normal
+
+        if t_min < t < t_max:
+            if self.material.uv_used:
+                u, v = self.get_uv(ri)
+            else:
+                u = v = None
+
+            hr = HitRecord(ri, rn, t, self.material, u, v)
+            hr.set_face_normal(ray, rn)
+
+        return hr
+
+
+class Disc(Geometry):
+
+    def __init__(self, center: Vec3, normal: Vec3, radius: float, material: Material):
+        """
+        Disc (circle) (not axis-aligned) -- defined by center point, normal and radius
+
+        For bounding box calculation see: https:// iquilezles.org/www/articles/diskbbox/diskbbox.htm
+        """
+        # Get the plane for the disc (Ax + By + Cz +d = 0)
+        super().__init__(material)
+
+        self.normal = normal.normalize()
+        self.center = center
+        self.radius = radius
+        self.a = self.normal.x
+        self.b = self.normal.y
+        self.c = self.normal.z
+        self.d = -dot(self.normal, center)
+        self.inverse_normal = -self.normal  # pre-compute to speed up hit testing
+        self.radius_squared = self.radius ** 2
+
+        # pre-calc bbox = center +/- radius * sqrt(1-normal)
+        v1 = Vec3(1,1,1) - self.normal
+        v2 = Vec3(math.sqrt(v1.x), math.sqrt(v1.y), math.sqrt(v1.z))
+        v3 = v2.mul_val(self.radius)
+        v4 = self.center + v3
+        v5 = self.center - v3
+        v_min = Vec3(min(v4.x, v5.x), min(v4.y, v5.y), min(v4.z, v5.z))
+        v_max = Vec3(max(v4.x, v5.x), max(v4.y, v5.y), max(v4.z, v5.z))
+        self.bbox = AABB(v_min, v_max)
+
+        # calculate u and v vectors for texture coords.
+        u = cross(Vec3(1,0,0), self.normal)
+
+        if u.length() < EPSILON:  # normal is parallel to (1,0,0)
+            u = cross(Vec3(0, 0, 1), self.normal)
+
+        self.u_vec = -u.normalize()
+        self.v_vec = -cross(u, self.normal).normalize()
+
+        # calculate lower lefthand corner for texture/uv calc
+        scaled_u = self.u_vec.mul_val(radius)
+        scaled_v = self.v_vec.mul_val(radius)
+        self.ll = self.center - scaled_u - scaled_v
+
+    def __repr__(self):
+        return f'Disc(center={self.center}, normal={self.normal}, radius={self.radius}  material={self.material})'
+
+    def has_bbox(self) -> bool:
+        return True
+
+    def bounding_box(self, t0: float, t1: float) -> AABB:
+        return self.bbox
+
+    def get_uv(self, p: Vec3):
+        # project line LLP (lower left to point) onto u_vec and v_vec and scale by 2*radius to get u and v
+        llp = p - self.ll
+        denom = 1 / (2*self.radius)
+        u = dot(self.u_vec, llp) *  denom
+        v = dot(self.v_vec, llp) *  denom
+        return (u,v)
+
+    def point_on(self):
+        # return a random point on the disc
+        radius = self.radius
+        radius_squared = self.radius_squared
+
+        while True:
+            u = uniform(-radius, radius)
+            v = uniform(-radius, radius)
+            if (u*u + v*v) < radius_squared:
+                break
+
+        u2 = self.u_vec.mul_val(u)
+        v2 = self.v_vec.mul_val(v)
+        p = self.center + u2 + v2
+        self.point_on_plane(p)
+        return p
+
+
+    def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
+        # check with intersection with the plane the disc is on
+        hr = None
+        vd = dot(self.normal, ray.direction)
+
+        if abs(vd) < EPSILON:  # ray is parallel to the plane -- no hit
+            return hr
+        elif vd > 0:  # normal is pointing away from the plane -- no hit for 1-sided plane
+            return hr
+
+        vo = -(dot(self.normal, ray.origin) + self.d)
+        t = vo/vd
+
+        if t < 0:  # intersection behind origin
+            return hr
+
+        ri = ray.origin + ray.direction.mul_val(t)
+
+        # the ray intersects the plane, now check if its in the disc (within radius**2 of center)
+        pc = ri - self.center
+        dist_squared = pc.x*pc.x + pc.y*pc.y + pc.z*pc.z
+
+        if dist_squared > self.radius_squared:
+            return hr
 
         if vd < 0:
             rn = self.normal

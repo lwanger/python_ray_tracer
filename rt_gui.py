@@ -55,8 +55,11 @@ from create_scene_funcs import *
 # CREATOR_FUNC = create_checkerboard_world
 # CREATOR_FUNC = create_checkerboard_world_2
 # CREATOR_FUNC = create_image_texture_world
-# CREATOR_FUNC = create_canonical_1
-CREATOR_FUNC = create_stl_mesh
+# CREATOR_FUNC = create_canonical_1  # ball over plane
+# CREATOR_FUNC = create_canonical_2  # teapot
+# CREATOR_FUNC = create_stl_mesh
+# CREATOR_FUNC = create_quad_world
+CREATOR_FUNC = create_disc_test_world
 
 
 # messages from GUI

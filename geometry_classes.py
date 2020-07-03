@@ -252,6 +252,7 @@ class Camera():
             origin = self.origin
             # direction = self.lower_left_corner + s*self.horizontal + t*self.vertical - self.origin
             direction = self.lower_left_corner + self.horizontal.mul_val(s) + self.vertical.mul_val(t) - self.origin
+            # direction = direction.normalize()  # Lenw... DELETE?
         else:
             # rd = random_in_unit_disc() * self.lens_radius
             rd = random_in_unit_disc().mul_val(self.lens_radius)
@@ -260,6 +261,7 @@ class Camera():
             origin = self.origin + offset
             # direction = self.lower_left_corner + self.horizontal*s + self.vertical*t - self.origin - offset
             direction = self.lower_left_corner + self.horizontal.mul_val(s) + self.vertical.mul_val(t) - self.origin - offset
+            # direction = direction.normalize()  # Lenw... DELETE?
         return Ray(origin, direction)
 
 
@@ -596,26 +598,6 @@ class BVHNode(Geometry):
                 return hit_left
             else:
                 return hit_right
-
-
-class Scene():
-    def __init__(self, geometry: GeometryList):
-        """
-        Class the represent a scene. Includes the geometry and lighting.
-
-        TODO:
-            add lighting
-            add start and end time
-            add rendering?
-            add camera?
-        """
-        # self.geometry = geometry  # not needed if you have bvh...
-        # self.ambient = ambient_light  # Vec3
-        # self.lights = light_list
-        self.bvh = BVHNode(geometry)
-
-    def hit(self, ray: Ray, tmin: float, tmax: float) -> bool:
-        return self.bvh.hit(ray, tmin, tmax)
 
 
 if __name__ == '__main__':

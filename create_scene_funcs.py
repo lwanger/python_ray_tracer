@@ -16,11 +16,13 @@ from PIL import Image
 
 from stl import mesh  # numpy-stl
 
-from geometry_classes import Vec3, GeometryList, Scene, Camera
+from geometry_classes import Vec3, GeometryList, Camera
 from geometry_classes import random_on_unit_sphere
 from material_classes import Lambertian, Metal, Dielectric
 from texture_classes import SolidColor, CheckerBoard, ImageTexture
-from primitives_classes import Sphere, Plane, Triangle, STLMesh
+from primitives_classes import Sphere, Plane, Triangle, Disc, STLMesh
+from light_classes import PointLight
+from scene import Scene
 
 
 def create_simple_world():
@@ -34,14 +36,22 @@ def create_simple_world():
     dielectric_1 = Dielectric(1.5, name="dielectric_1")
 
     world = GeometryList()
+
     world.add(Sphere(Vec3(0,0,-1), 0.5, diffuse_1))
     world.add(Sphere(Vec3(0,-100.5,-1), 100, diffuse_2))
-    world.add(Sphere(Vec3(1,0,-1), 0.5, metal_1))
-    world.add(Sphere(Vec3(-1,0,-1),0.5, dielectric_1))
-    world.add(Sphere(Vec3(-1,0,-1),-0.45, dielectric_1))  # hollow sphere
+    world.add(Sphere(Vec3(1.25,0,-1), 0.5, metal_1))
+    world.add(Sphere(Vec3(-1.25,0,-1),0.5, dielectric_1))
+    world.add(Sphere(Vec3(-1.25,0,-1),-0.45, dielectric_1))  # hollow sphere
 
-    scene = Scene(world)
-    camera = Camera(look_from=Vec3(-0.5, 1, 5), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1,
+    ambient = Vec3(0.7, 0.7, 0.7)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    # light_1 = PointLight(pos=Vec3(0, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    light_1 = PointLight(pos=Vec3(-1, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))
+    # light_2 = PointLight(pos=Vec3(0, 10, 5.0), color=Vec3(0.1, 0.1, 0.25))  # blue light to the left
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
+    #camera = Camera(look_from=Vec3(-0.5, 1, 5), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1,
+    camera = Camera(look_from=Vec3(-0.5, 1, 5), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.0,
                     focus_dist=20)
     return {'scene': scene, 'camera': camera}
 
@@ -66,8 +76,12 @@ def create_simple_world_2():
     world.add(plane_1)
     world.add(plane_2)
 
-    scene = Scene(world)
-    camera = Camera(look_from=Vec3(-0.5, 1, 10), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1,
+    ambient = Vec3(0.6, 0.6, 0.6)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(-2, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
+    camera = Camera(look_from=Vec3(-0.5, 1, 10), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.0,
                     focus_dist=20)
     return {'scene': scene, 'camera': camera}
 
@@ -105,9 +119,13 @@ def create_simple_world_3():
     plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0,-3,0), normal=Vec3(0,1,0), material=diffuse_3)
     world.add(plane_1)
 
-    scene = Scene(world)
+    ambient = Vec3(0.6, 0.6, 0.6)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(-2, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
     # camera = Camera(look_from=Vec3(-0.5, 1, 13), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
-    camera = Camera(look_from=Vec3(1, 1, 13), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
+    camera = Camera(look_from=Vec3(1, 1, 13), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.0, focus_dist=20)
     return {'scene': scene, 'camera': camera}
 
 
@@ -156,7 +174,11 @@ def create_random_world():
     material_3 = Metal(color_3, 0.0)
     world.add(Sphere(Vec3(4, 1, 0), 1.0, material_3))
 
-    scene = Scene(world)
+    ambient = Vec3(0.6, 0.6, 0.6)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(18,12,5), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
     camera = Camera(look_from=Vec3(13, 2, 3), look_at=Vec3(0, 0, 0), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
     return {'scene': scene, 'camera': camera}
 
@@ -209,7 +231,11 @@ def create_random_world2():
                 triangle = Triangle(v0,v1,v2, material)
                 world.add(triangle)
 
-    scene = Scene(world)
+    ambient = Vec3(0.6, 0.6, 0.6)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(18, 10, 5), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
     camera = Camera(look_from=Vec3(13, 2, 3), look_at=Vec3(0, 0, 0), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
     return {'scene': scene, 'camera': camera}
 
@@ -248,7 +274,11 @@ def create_checkerboard_world():
     world.add(Sphere(Vec3(-1.2,0,-1),0.5, dielectric_1))
     world.add(Sphere(Vec3(-1.2,0,-1),-0.45, dielectric_1))  # hollow sphere
 
-    scene = Scene(world)
+    ambient = Vec3(0.6, 0.6, 0.6)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(-2, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
     camera = Camera(look_from=Vec3(-0.5, 1, 5), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=30)
     return {'scene': scene, 'camera': camera}
 
@@ -265,7 +295,11 @@ def create_checkerboard_world_2():
     world.add(Sphere(Vec3(0,-10,0), 10, diffuse_1))
     world.add(Sphere(Vec3(0,10,0), 10, metal_1))
 
-    scene = Scene(world)
+    ambient = Vec3(0.6, 0.6, 0.6)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(-2, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
     camera = Camera(look_from=Vec3(-0.5, 1, 15), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20)
 
     return {'scene': scene, 'camera': camera}
@@ -294,19 +328,18 @@ def create_image_texture_world():
     plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0, -3, 0), normal=Vec3(0, 1, 0), material=diffuse_2)
     world.add(plane_1)
 
-    scene = Scene(world)
+    ambient = Vec3(0.6, 0.6, 0.6)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(-2, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
     camera = Camera(look_from=Vec3(-0.5, 1, 7), look_at=Vec3(0, 0, -0.5), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1, focus_dist=20)
 
     return {'scene': scene, 'camera': camera}
 
 
 def create_canonical_1():
-    """
-    debug:
-        - only half of checkerboard showingup
-        - no io_logo image showing up on checkerboard
-        X reflection on sphere in wrong place?
-    """
+    # sphere over a checkerboard!
     silver = SolidColor(Vec3(0.7, 0.7, 0.7))
 
     # image_1 = Image.open(Path("./textures/earthlights_dmsp_big.jpg"))
@@ -320,7 +353,7 @@ def create_canonical_1():
     even_color = SolidColor(Vec3(0.1, 0.1, 0.1))
     checker_board = CheckerBoard(even_color, odd_color, spacing=2.0)
 
-    if False:  # use checkerboard vs image texture
+    if True:  # use checkerboard vs image texture
         diffuse_2 = Lambertian(checker_board, name="checkerboard")
     else:
         diffuse_2 = Lambertian(logo, name="io_logo'")
@@ -331,7 +364,7 @@ def create_canonical_1():
 
     world.add(Sphere(Vec3(0, 1.25, 0.35), 1.0, metal_1))
 
-    if False:  # use plane vs triangles
+    if True:  # use plane vs triangles
         plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0, -1, 0), normal=Vec3(0, 1, 0), material=diffuse_2)
         world.add(plane_1)
     else:
@@ -353,16 +386,108 @@ def create_canonical_1():
         triangle = Triangle(v1, v2, v3, diffuse_2, uv1, uv2, uv3)
         world.add(triangle)
 
-    scene = Scene(world)
+    ambient = Vec3(0.6,0.6,0.6)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    # background = SolidColor(Vec3(0,0,0))
+    light_1 = PointLight(pos=Vec3(11,10,3), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
     camera = Camera(look_from=Vec3(8.5, 4, 0), look_at=Vec3(0, 1, 0), vup=Vec3(0, 1, 0), vert_fov=25)
 
     return {'scene': scene, 'camera': camera}
 
 
-# def scale(np, x, out_range=(-1, 1), axis=None):
-#     domain = np.min(x, axis), np.max(x, axis)
-#     y = (x - (domain[1] + domain[0]) / 2) / (domain[1] - domain[0])
-#     return y * (out_range[1] - out_range[0]) + (out_range[1] + out_range[0]) / 2
+def create_canonical_2():
+    """
+    teapot time!
+
+    TEAPOT_thingiverse.stl -- bbox=AABB(vmin=(-15.000, -10.005, -9.088), vmax=(16.371, 10.005, 7.162)), num_triangles=87298
+    """
+    use_teapot = "THINGIVERSE"
+    # use_teapot = "WIKICOMMONS"
+
+    if use_teapot == "THINGIVERSE":  # bbox=(-15.000, -9.088, -10.005), (16.371, 7.162, 10.005)),
+        spacing=0.5
+        stl_filename = Path("models/TEAPOT_thingiverse.stl")
+        rot_axis = [1, 0, 0]
+        rot_rads = math.pi / 2.0  # 45 deg
+        look_from = Vec3(0, 15, 60)
+        look_at = Vec3(0, -1.5, 0)
+        plane_y = -9.1
+        plane_x = 25
+        back_plane_z = -25
+        front_plane_z = 15
+        light1_pos = Vec3(11, 10, 3)
+    else:  #  wikicommons - bbox (-8.164, 0.000, -5.557), (9.412, 8.572, 5.370)
+        spacing=1
+        stl_filename = Path("models/Utah_teapot_commons.stl")
+        rot_axis = [1, 0, 0]
+        rot_rads = math.pi / 2.0  # 45 deg
+        look_from = Vec3(-3, 13, 30)
+        look_at = Vec3(0, 4, 0)
+        plane_y = -0.05
+        plane_x = 20
+        back_plane_z = -10
+        front_plane_z = 10
+        light1_pos = Vec3(-3, 14, 8)
+
+    silver = SolidColor(Vec3(0.7, 0.7, 0.7))
+    light_gray = SolidColor(Vec3(0.85, 0.85, 0.85))
+
+    odd_color = SolidColor(Vec3(0.2, 0.75, 0.2))
+    even_color = SolidColor(Vec3(0.1, 0.1, 0.1))
+
+    checker_board = CheckerBoard(even_color, odd_color, spacing=spacing)
+    diffuse_1 = Lambertian(checker_board, name="checkerboard")
+
+    # diffuse_2 = Lambertian(silver, name="silver_matte")
+    diffuse_2 = Lambertian(light_gray, name="silver_matte")
+    fuzz = 0.2
+    metal_1 = Metal(silver, fuzziness=fuzz, name="chrome")
+
+    world = GeometryList()
+
+    my_mesh = mesh.Mesh.from_file(stl_filename)
+    my_mesh.rotate(rot_axis, rot_rads)
+
+    # teapot_matl = metal_1
+    teapot_matl = diffuse_2
+
+    stl_mesh = STLMesh(my_mesh, teapot_matl, name="teapot")
+    print(f'stl_mesh {stl_filename} -- bbox={stl_mesh.bounding_box(None, None)}, num_triangles={stl_mesh.num_triangles}')
+    world.add(stl_mesh)
+
+    if False:  # use plane vs triangles
+        plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0, plane_y, 0), normal=Vec3(0, 1, 0), material=diffuse_1)
+        world.add(plane_1)
+    else:
+        v0 = Vec3(-plane_x, plane_y, front_plane_z)
+        uv0 = (0,0)
+        v1 = Vec3(-plane_x ,plane_y,back_plane_z)
+        uv1 = (0, 1)
+        v2 = Vec3(plane_x, plane_y, front_plane_z)
+        uv2 = (1, 0)
+        v3 = Vec3(plane_x, plane_y,back_plane_z)
+        uv3 = (1, 1)
+        triangle = Triangle(v0, v1, v2, diffuse_1, uv0, uv1, uv2)
+        world.add(triangle)
+
+        triangle = Triangle(v1, v2, v3, diffuse_1, uv1, uv2, uv3)
+        world.add(triangle)
+
+    # ambient = Vec3(0.6,0.6,0.6)
+    ambient = Vec3(0.5,0.5,0.5)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    # light_1 = PointLight(pos=light1_pos, color=Vec3(0.35, 0.35, 0.35))
+    light_1 = PointLight(pos=light1_pos, color=Vec3(0.5, 0.5, 0.5))
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
+    camera = Camera(look_from=look_from, look_at=look_at, vup=Vec3(0, 1, 0), vert_fov=25)
+
+    #TEAPOT_thingiverse.stl - vmin=(-15.000, -10.005, -9.088), vmax=(16.371, 10.005, 7.162), num_triangles=87298
+
+    return {'scene': scene, 'camera': camera}
+
 
 
 def create_stl_mesh():
@@ -373,7 +498,7 @@ def create_stl_mesh():
     silver = SolidColor(Vec3(0.7, 0.7, 0.7))
     green = SolidColor(Vec3(0.1, 0.5, 0.1))
     blue = SolidColor(Vec3(0.1, 0.1, 0.5))
-    red = SolidColor(Vec3(0.5, 0.1, 0.1))
+    red = SolidColor(Vec3(0.5, 0.2, 0.2))
     purple = SolidColor(Vec3(0.4, 0.1, 0.4))
     gray = SolidColor(Vec3(0.2, 0.2, 0.2))
     light_gray = SolidColor(Vec3(0.9, 0.9, 0.9))
@@ -391,14 +516,20 @@ def create_stl_mesh():
     #             'plane_x': 400, 'plane_y': -500, 'back_plane_z': 0, 'front_plane_z': 60,
     #             'rot_axis': None, 'rot_rads': None, 'show_walls': False}
 
-    stl_filename ="models/gyroid_20mm.stl"
-    # settings = {'look_from': Vec3(0.0, 4, 60), 'look_at': Vec3(0, 0.0, 0),
-    settings = {'look_from': Vec3(-10.0, 25, 60), 'look_at': Vec3(0, 0.0, 0),
-                # 'plane_x': 15, 'plane_y': -13, 'back_plane_z': -15, 'front_plane_z': 15,
-                'plane_x': 25, 'plane_y': -15, 'back_plane_z': -20, 'front_plane_z': 15,
-                'rot_axis': None, 'rot_rads': None, 'show_walls': True}
+    # stl_filename ="models/gyroid_20mm.stl"
+    # settings = {'look_from': Vec3(-10.0, 25, 60), 'look_at': Vec3(0, 0.0, 0),
+    #             'plane_x': 25, 'plane_y': -15, 'back_plane_z': -30, 'front_plane_z': 15,
+    #             'rot_axis': None, 'rot_rads': None, 'show_walls': True}
 
-    # stl_filename ="models/modern_hexagon_revisited.stl"
+    stl_filename ="models/IO_Sample_Hexagon.stl"
+    settings = {'look_from': Vec3(-10.0, 100, 80), 'look_at': Vec3(0, 30.0, -4),
+                'plane_x': 50, 'plane_y': -10, 'back_plane_z': -35, 'front_plane_z': 15,
+                'rot_axis': None, 'rot_rads': None, 'translate': [-23, -5, -10], 'show_walls': True}
+
+    # stl_filename ="models/sn_logo.stl"
+    # stl_filename ="models/modern_hexagon_revised.stl"
+
+
     # stl_filename ="models/bar_6mm.stl"
     # settings = {'look_from': Vec3(50, 25, 50), 'look_at': Vec3(0, 0.5, 0),
     #             'plane_x': 20, 'plane_y': -5, 'back_plane_z': -50, 'front_plane_z': 50, }
@@ -408,108 +539,112 @@ def create_stl_mesh():
 
     checked = CheckerBoard(dark_gray, light_gray, spacing=0.5)
 
+    diffuse_red = Lambertian(red, name="red'")
+    diffuse_blue = Lambertian(blue, name="blue'")
+    diffuse_gray = Lambertian(gray, name="gray'")
     metal_1 = Metal(silver, name="metal_1")
+    logo_matl = Lambertian(logo, name="logo")
+    # dielectric_1 = Dielectric(1.5, name="dielectric_1")
+    checkerboard = Lambertian(checked, name="gray'")
 
-    # diffuse_2 = Lambertian(logo, name="io_logo'")
-    diffuse_2 = Lambertian(gray, name="gray'")
-
-    object_matl = metal_1
-
-    # ground = Lambertian(green, name="green'")
-    # ground = Lambertian(logo, name="gray'")
-    ground = Lambertian(checked, name="gray'")
-    # right_wall = Lambertian(red, name="red'")
-    right_wall = Lambertian(logo, name="red'")
-    # right_wall = metal_1
-    left_wall = Lambertian(blue, name="blue'")
-    # left_wall = metal_1
-    # back_wall = Lambertian(purple, name="purple'")
-    back_wall = metal_1
+    # object_matl = metal_1
+    object_matl = diffuse_gray
+    ground_matl = checkerboard
+    # right_wall_matl = diffuse_red
+    right_wall_matl = metal_1
+    # left_wall_matl = diffuse_blue
+    left_wall_matl = metal_1
+    # back_wall_matl = logo_matl
+    back_wall_matl = metal_1
 
     world = GeometryList()
-
-    # world.add(Sphere(Vec3(0, 1.25, 0.35), 1.0, metal_1))
 
     if True:
         plane_x = settings['plane_x']
         plane_y = settings['plane_y']
         back_plane_z = settings['back_plane_z']
         front_plane_z = settings['front_plane_z']
-        v0 = Vec3(-plane_x, plane_y, front_plane_z)
-        uv0 = (0,0)
-        v1 = Vec3(-plane_x ,plane_y,back_plane_z)
-        uv1 = (0, 1)
-        v2 = Vec3(plane_x, plane_y, front_plane_z)
-        uv2 = (1, 0)
-        v3 = Vec3(plane_x, plane_y,back_plane_z)
-        uv3 = (1, 1)
-        triangle = Triangle(v0, v1, v2, ground, uv0, uv1, uv2)
-        world.add(triangle)
 
-        triangle = Triangle(v1, v2, v3, ground, uv1, uv2, uv3)
-        world.add(triangle)
+        if True:
+            # ground plane
+            v0 = Vec3(-plane_x, plane_y, front_plane_z)
+            uv0 = (0,1)
+            v1 = Vec3(-plane_x ,plane_y,back_plane_z)
+            uv1 = (0,0)
+            v2 = Vec3(plane_x, plane_y, front_plane_z)
+            uv2 = (1,1)
+            v3 = Vec3(plane_x, plane_y,back_plane_z)
+            uv3 = (1,0)
+            triangle = Triangle(v0, v1, v2, ground_matl, uv0, uv1, uv2)
+            world.add(triangle)
+            triangle = Triangle(v1, v2, v3, ground_matl, uv1, uv2, uv3)
+            world.add(triangle)
 
         height = 2 * plane_x
 
         if settings['show_walls'] is True:
             # right wall
             v0 = Vec3(plane_x, plane_y, front_plane_z)
-            uv0 = (0, 0)
+            uv0 = (1, 1)
             v1 = Vec3(plane_x, plane_y, back_plane_z)
             uv1 = (0, 1)
             v2 = Vec3(plane_x, plane_y+height, back_plane_z)
-            uv2 = (1, 0)
+            uv2 = (0,0)
             v3 = Vec3(plane_x, plane_y+height, front_plane_z)
-            uv3 = (1, 1)
-            triangle = Triangle(v0, v1, v2, right_wall, uv0, uv1, uv2)
+            uv3 = (1, 0)
+            triangle = Triangle(v0, v1, v2, right_wall_matl, uv0, uv1, uv2)
             world.add(triangle)
-
-            triangle = Triangle(v0, v2, v3, right_wall, uv1, uv2, uv3)
+            triangle = Triangle(v0, v2, v3, right_wall_matl, uv0, uv2, uv3)
             world.add(triangle)
 
             # left wall
             v0 = Vec3(-plane_x, plane_y, front_plane_z)
-            uv0 = (0, 0)
+            uv0 = (0, 1)
             v1 = Vec3(-plane_x, plane_y, back_plane_z)
-            uv1 = (0, 1)
+            uv1 = (1, 1)
             v2 = Vec3(-plane_x, plane_y + height, back_plane_z)
             uv2 = (1, 0)
             v3 = Vec3(-plane_x, plane_y + height, front_plane_z)
-            uv3 = (1, 1)
-            triangle = Triangle(v0, v1, v2, left_wall, uv0, uv1, uv2)
+            uv3 = (0, 0)
+            triangle = Triangle(v0, v1, v2, left_wall_matl, uv0, uv1, uv2)
             world.add(triangle)
-
-            triangle = Triangle(v0, v2, v3, left_wall, uv1, uv2, uv3)
+            triangle = Triangle(v0, v2, v3, left_wall_matl, uv0, uv2, uv3)
             world.add(triangle)
 
             # back wall
             v0 = Vec3(-plane_x, plane_y, back_plane_z)
-            uv0 = (0, 0)
+            uv0 = (0, 1)
             v1 = Vec3(-plane_x, plane_y + height, back_plane_z)
-            uv1 = (0, 1)
+            uv1 = (0, 0)
             v2 = Vec3(plane_x, plane_y + height, back_plane_z)
             uv2 = (1, 0)
             v3 = Vec3(plane_x, plane_y, back_plane_z)
             uv3 = (1, 1)
-            triangle = Triangle(v0, v1, v2, back_wall, uv0, uv1, uv2)
+            triangle = Triangle(v0, v1, v2, back_wall_matl, uv0, uv1, uv2)
             world.add(triangle)
-
-            triangle = Triangle(v0, v2, v3, back_wall, uv1, uv2, uv3)
+            triangle = Triangle(v0, v2, v3, back_wall_matl, uv0, uv2, uv3)
             world.add(triangle)
 
     my_mesh = mesh.Mesh.from_file(stl_filename)
+
+    if 'translate' in settings:
+        settings['translate'][0]
+        my_mesh.translate([settings['translate'][0], settings['translate'][1], settings['translate'][2]])
 
     if 'rot_axis' in settings and settings['rot_axis'] is not None:
         rot_axis = settings['rot_axis']
         rot_rads = settings['rot_rads']
         my_mesh.rotate(rot_axis, rot_rads)
 
-    # stl_mesh = STLMesh(my_mesh, metal_1, name="mesh_1")
     stl_mesh = STLMesh(my_mesh, object_matl, name="mesh_1")
     print(f'stl_mesh {stl_filename} -- bbox={stl_mesh.bounding_box(None, None)}, num_triangles={stl_mesh.num_triangles}')
     world.add(stl_mesh)
 
-    scene = Scene(world)
+    ambient = Vec3(0.6, 0.6, 0.6)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(-10.0, 100, 80), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
 
     # camera = Camera(look_from=Vec3(8.5, 4, 0), look_at=Vec3(0, 1, 0), vup=Vec3(0, 1, 0), vert_fov=25)
     # camera = Camera(look_from=Vec3(12, 3, 0), look_at=Vec3(0, 0.5, 0), vup=Vec3(0, 1, 0), vert_fov=25)
@@ -517,4 +652,86 @@ def create_stl_mesh():
     look_at = settings['look_at']
     camera = Camera(look_from=look_from, look_at=look_at, vup=Vec3(0, 1, 0), vert_fov=25)
 
+    return {'scene': scene, 'camera': camera}
+
+
+def create_quad_world():
+    color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
+    color_2 = SolidColor(Vec3(0.8, 0.8, 0))
+    color_3 = SolidColor(Vec3(0.8,0.6,0.2))
+
+    image_1 = Image.open(Path("./textures/earthlights_dmsp_big.jpg"))
+    image_texture_1 = ImageTexture(image_1, "earthlights")
+    texture_1 = Lambertian(image_texture_1, name="texture_1")
+
+    diffuse_1 = Lambertian(color_1, name="diffuse_1")
+    diffuse_2 = Lambertian(color_2, name="diffuse_2")
+    diffuse_3 = Lambertian(color_3, name="diffuse_3")
+    # metal_1 = Metal(color_3, fuzziness=0.3, name="metal_1")
+    # dielectric_1 = Dielectric(1.5, name="dielectric_1")
+
+    world = GeometryList()
+
+    v0 = Vec3(-1,0,0)
+    v1 = Vec3(-1,1,0)
+    v2 = Vec3(1,1,0)
+    # world.add(Quad(v0,v1,v2, diffuse_1))  # XY
+    world.add(Quad(v0,v1,v2, texture_1))  # XY
+
+    v0 = Vec3(-1, 0, -1)  # XZ
+    v1 = Vec3(-1, 0, -2)
+    v2 = Vec3(1, 0, -1)
+    world.add(Quad(v0, v1, v2, diffuse_2))
+
+    v0 = Vec3(-0.75, 3, -0.75)
+    v1 = Vec3(-1, 2, -0.35)
+    v2 = Vec3(0.3, 2.75, -0.5)
+    world.add(Quad(v0, v1, v2, diffuse_3))
+
+    ambient = Vec3(0.7, 0.7, 0.7)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(-1, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
+    camera = Camera(look_from=Vec3(1.5, 3, 5), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.0,
+    # camera = Camera(look_from=Vec3(0, 30, 0), look_at=Vec3(0, 0, 0), vup=Vec3(-1, 0, 0), vert_fov=20, aperature=0.0,
+                    focus_dist=20)
+    return {'scene': scene, 'camera': camera}
+
+
+def create_disc_test_world():
+    color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
+    color_2 = SolidColor(Vec3(0.8, 0.8, 0))
+    color_3 = SolidColor(Vec3(0.8,0.6,0.2))
+
+    # image_1 = Image.open(Path("./textures/earthlights_dmsp_big.jpg"))
+    image_1 = Image.open(Path("./textures/george harrison (1 bit).bmp"))
+    image_texture_1 = ImageTexture(image_1, "earthlights")
+
+    diffuse_1 = Lambertian(color_1, name="diffuse_1")
+    diffuse_2 = Lambertian(color_2, name="diffuse_2")
+    diffuse_3 = Lambertian(image_texture_1, name="diffuse_3")
+    metal_1 = Metal(color_3, fuzziness=0.0, name="metal_1")
+    dielectric_1 = Dielectric(1.5, name="dielectric_1")
+
+    world = GeometryList()
+
+
+    disc = Disc(center=Vec3(-1.5,1.5,0), normal=Vec3(0,0,1), radius=0.5, material=diffuse_1)
+    p = disc.point_on()
+
+    disc = Disc(center=Vec3(0,1.0,0), normal=Vec3(0,-1,1), radius=0.75, material=diffuse_3)
+    p = disc.point_on()
+
+    world.add(Disc(center=Vec3(-1.5,1.5,0), normal=Vec3(0,0,1), radius=0.5, material=diffuse_1))
+    world.add(Disc(center=Vec3(1.5,1.5,0), normal=Vec3(0,0,1), radius=1.0, material=diffuse_2))
+    world.add(Disc(center=Vec3(0,1.0,0), normal=Vec3(0,-1,1), radius=0.75, material=diffuse_3))
+    world.add(Disc(center=Vec3(0,0,0), normal=Vec3(0,1,0), radius=5.0, material=metal_1))
+
+    ambient = Vec3(0.7, 0.7, 0.7)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    light_1 = PointLight(pos=Vec3(-1, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
+    camera = Camera(look_from=Vec3(-0.5, 3, 10), look_at=Vec3(0, 1.0, 0), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.0, focus_dist=20)
     return {'scene': scene, 'camera': camera}

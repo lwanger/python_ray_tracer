@@ -11,8 +11,9 @@ from collections import namedtuple
 import math
 from random import random
 
-from geometry_classes import Vec3, Geometry, Ray, dot, random_unit_vec3, random_in_unit_sphere
+from geometry_classes import Vec3,  Ray, dot, random_unit_vec3, random_in_unit_sphere
 from texture_classes import Texture
+from scene import Scene
 
 
 _TINY = 1e-15
@@ -56,12 +57,13 @@ class Lambertian(Material):
     def __init__(self, a: Texture, name=None):
         super().__init__(name)
         self.albedo = a
+        self.uv_used = self.albedo.uv_used
 
     def __repr__(self):
         return f'Lambertian(name={self.name}, albedo={self.albedo})'
 
     def uv_used(self):
-        return self.albedo.uv_used
+        return self.uv_used
 
     def scatter(self, ray_in: Ray, hr: "HitRecord") -> MaterialReturn:
         scatter_direction = hr.normal + random_unit_vec3()
@@ -134,7 +136,32 @@ class Dielectric(Material):
         return MaterialReturn(True, scattered, attenuation)
 
 
-def ray_color(ray: Ray, world: Geometry, depth=1):
+# def ray_color(ray: Ray, world: Scene, depth=1):
+#     if depth < 1:
+#         return Vec3(0, 0, 0)
+#
+#     hr = world.hit(ray, 0.001, math.inf)
+#
+#     if hr is not None:
+#         matl_record = hr.material.scatter(ray, hr)
+#         if matl_record.more:
+#             return matl_record.attenuation * ray_color(matl_record.scattered, world, depth-1)
+#         else:
+#             return Vec3(0,0,0)
+#
+#     unit_direction = ray.direction.unit_vector()
+#     t = 0.5 * (unit_direction.y + 1.0)
+#     # return Vec3(1.0, 1.0, 1.0)*(1-t) + Vec3(0.5, 0.7, 1.0)*t
+#     return Vec3(1.0, 1.0, 1.0).mul_val(1-t) + Vec3(0.5, 0.7, 1.0).mul_val(t)  # gradient
+
+def ray_color(ray: Ray, world: Scene, depth=1):
+    """
+    TODO --
+        shadow rays to see if hit lights
+        reflection ray
+        transmission ray
+        pixel is: (ambient + lights hit) * ray_color
+    """
     if depth < 1:
         return Vec3(0, 0, 0)
 
@@ -143,11 +170,21 @@ def ray_color(ray: Ray, world: Geometry, depth=1):
     if hr is not None:
         matl_record = hr.material.scatter(ray, hr)
         if matl_record.more:
-            return matl_record.attenuation * ray_color(matl_record.scattered, world, depth-1)
+            # spawn shadow rays:
+            # light_contrib = Vec3(0,0,0)
+            light_contrib = world.ambient
+            for l in world.lights:
+                light_val = l.hit(matl_record.scattered.origin, world)
+                light_contrib += light_val
+
+            # return matl_record.attenuation * ray_color(matl_record.scattered, world, depth-1)
+            # return light_contrib* matl_record.attenuation * ray_color(matl_record.scattered, world, depth-1) + world.ambient
+            return light_contrib* matl_record.attenuation * ray_color(matl_record.scattered, world, depth-1)
         else:
             return Vec3(0,0,0)
 
     unit_direction = ray.direction.unit_vector()
-    t = 0.5 * (unit_direction.y + 1.0)
+    # t = 0.5 * (unit_direction.y + 1.0)
     # return Vec3(1.0, 1.0, 1.0)*(1-t) + Vec3(0.5, 0.7, 1.0)*t
-    return Vec3(1.0, 1.0, 1.0).mul_val(1-t) + Vec3(0.5, 0.7, 1.0).mul_val(t)
+    # return Vec3(1.0, 1.0, 1.0).mul_val(1-t) + Vec3(0.5, 0.7, 1.0).mul_val(t)  # gradient
+    return world.background.value(u=0, v=0, p=unit_direction)
