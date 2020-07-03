@@ -11,7 +11,7 @@ removed isinstance calls from Vec3 dunder methods (was very slow!)
 from abc import ABC, abstractmethod
 from collections import namedtuple
 import math
-from random import uniform, randint
+from random import uniform, randint, choice
 from typing import Optional
 
 
@@ -393,6 +393,12 @@ class Geometry(ABC):
         # t0 and t1 are used for start and stop time (not used for stationary objects)
         pass
 
+    @abstractmethod
+    def point_on(self):
+        # return a uniformly distributed random point on the primitive. Used for sampling lights
+        pass
+
+
 
 class GeometryList():
     def __init__(self, initial_list=None):
@@ -574,6 +580,28 @@ class BVHNode(Geometry):
 
     def bounding_box(self, t0: float, t1: float) -> AABB:
         return self.bbox
+
+    def point_on(self):
+        # pick a random primitive in the BVH and return point_on for it.
+        def pick_node(node: BVHNode):
+            if node.right is None:
+                return self.left
+            dir = choice([0,1])
+            if dir==0:  # left
+                pick = node.left
+            else:
+                pick = node.right
+
+            if isinstance(pick, BVHNode):
+                r = pick_node(pick)
+            else:
+                return pick
+
+            return r
+
+        prim = pick_node(self)
+        p = prim.point_on()
+        return p
 
     def hit(self, ray: Ray,t_min: float=0.0, t_max: float=math.inf) -> HitRecord:
         hr = self.bbox.hit(ray, t_min, t_max)

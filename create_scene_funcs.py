@@ -50,6 +50,7 @@ def create_simple_world():
     # light_2 = PointLight(pos=Vec3(0, 10, 5.0), color=Vec3(0.1, 0.1, 0.25))  # blue light to the left
     lights = [light_1]
     scene = Scene(world, ambient=ambient, lights=lights, background=background)
+
     #camera = Camera(look_from=Vec3(-0.5, 1, 5), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.1,
     camera = Camera(look_from=Vec3(-0.5, 1, 5), look_at=Vec3(0, 0, -1), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.0,
                     focus_dist=20)
@@ -85,7 +86,6 @@ def create_simple_world_2():
                     focus_dist=20)
     return {'scene': scene, 'camera': camera}
 
-
 def create_simple_world_3():
     # add triangles
     color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
@@ -104,6 +104,7 @@ def create_simple_world_3():
     v0 = Vec3(-1.8, -0.5, 1.5)
     v1 = Vec3(-1.0, 0.5, 1.5)
     v2 = Vec3(-0.2, -0.5, 1.5)
+
     world.add(Triangle(v0,v1,v2,diffuse_1))
 
     v0 = Vec3(1.8, -0.5, 1.5)
@@ -715,13 +716,6 @@ def create_disc_test_world():
     dielectric_1 = Dielectric(1.5, name="dielectric_1")
 
     world = GeometryList()
-
-
-    disc = Disc(center=Vec3(-1.5,1.5,0), normal=Vec3(0,0,1), radius=0.5, material=diffuse_1)
-    p = disc.point_on()
-
-    disc = Disc(center=Vec3(0,1.0,0), normal=Vec3(0,-1,1), radius=0.75, material=diffuse_3)
-    p = disc.point_on()
 
     world.add(Disc(center=Vec3(-1.5,1.5,0), normal=Vec3(0,0,1), radius=0.5, material=diffuse_1))
     world.add(Disc(center=Vec3(1.5,1.5,0), normal=Vec3(0,0,1), radius=1.0, material=diffuse_2))
