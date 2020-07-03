@@ -12,14 +12,16 @@ TODO:
 """
 
 import math
-from random import uniform
+from random import random, uniform
 from typing import Optional
 
 from geometry_classes import Vec3, Ray, Geometry, GeometryList, BVHNode, HitRecord, AABB, dot, cross
+from geometry_classes import random_on_unit_sphere
 from material_classes import Material
 
 EPSILON = 1e-15
 NEG_EPSILON = -1e-15
+INV_EPSILON = 1/EPSILON
 TWO_PI = 2*math.pi
 HALF_PI = math.pi/2
 
@@ -76,6 +78,12 @@ class Sphere(Geometry):
         u = 1 - (phi + math.pi) / TWO_PI
         v = (theta + HALF_PI) / math.pi
         return (u,v)
+
+    def point_on(self):
+        # return a random point on the sphere
+        p = random_on_unit_sphere().mul_val(self.radius) + self.center
+        return p
+
 
     def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
         hr = None
@@ -166,6 +174,26 @@ class Plane(Geometry):
             _, v = divmod(u, 1.0)
 
         return (u,v)
+
+    def point_on(self):
+        # doesn't really make sense for a plane... but do it any way
+        rand_1 = uniform(-INV_EPSILON, INV_EPSILON)
+        rand_2 = uniform(-INV_EPSILON, INV_EPSILON)
+
+        if self.c != 0:
+            x = rand_1
+            y = rand_2
+            z = -(self.a*x + self.b*y + self.d) / self.c
+        elif self.b != 0:
+            x = rand_1
+            z = rand_2
+            y = -(self.a*x + self.c*z + self.d) / self.b
+        else:
+            y = rand_1
+            z = rand_2
+            x = -(self.b*y + self.c*z + self.d) / self.a
+        return Vec3(x,y,z)
+
 
     def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
         hr = None
@@ -282,6 +310,48 @@ class Triangle(Geometry):
         pv = a*self.v.x + b*self.v.y + c*self.v.z
 
         return (pu, pv)
+
+    def point_on(self):
+        # random point on the triangle.
+        # From  https://pharr.org/matt/blog/2019/02/27/triangle-sampling-1.html#:~:text=Consider%20sampling%20a%20point%20on%20a%20triangular%20light,probability%20if%20the%20sample%20u%20is%20uniformly%20distributed.
+        uf = int(random() * (1<<32))
+        A = (1, 0)
+        B = (0, 1)
+        C = (0, 0)  # Barycentrics
+
+        # l = [(uf >> (2 * (15 - i))) & 3 for i in range(16)]
+
+        for i in range(16): # for each base-4 digit
+            d = (uf >> (2 * (15 - i))) & 3  # Get the digit
+
+            if d==0:
+                An = ((B[0] + C[0])/2, (B[1] + C[1])/2)
+                Bn = ((A[0] + C[0])/2, (A[1] + C[1])/2)
+                Cn = ((A[0] + B[0])/2, (A[1] + B[1])/2)
+            elif d==1:
+                # An = A
+                An = (A[0], A[1])
+                Bn = ((A[0] + B[0])/2, (A[1] + B[1])/2)
+                Cn = ((A[0] + C[0])/2, (A[1] + C[1])/2)
+            elif d==2:
+                An = ((B[0] + A[0])/2, (B[1] + A[1])/2)
+                # Bn = B
+                Bn = (B[0],B[1])
+                Cn = ((B[0] + C[0])/2, (B[1] + C[1])/2)
+            else:  # d==3
+                An = ((C[0] + A[0])/2, (C[1] + A[1])/2)
+                Bn = ((C[0] + B[0])/2, (C[1] + B[1])/2)
+                # Cn = C
+                Cn = (C[0],C[1])
+            A = An
+            B = Bn
+            C = Cn
+
+        # r = (A + B + C) / 3
+        x = (A[0] + B[0] + C[0]) / 3
+        y = (A[1] + B[1] + C[1]) / 3
+        v = Vec3(x, y, 1 - x - y)
+        return v
 
     def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
         # Moller Trumbore method -- https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
@@ -500,6 +570,10 @@ class STLMesh(Geometry):
     def get_uv(self, p: Vec3):
         # not supported on STL mesh object, just return a default value
         return (0,0)
+
+    def point_on(self):
+        return self.bvh.point_on()
+
 
     def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
         # hit is just the hit of the bvh
