@@ -21,11 +21,11 @@ from geometry_classes import random_on_unit_sphere
 from material_classes import Lambertian, Metal, Dielectric
 from texture_classes import SolidColor, CheckerBoard, ImageTexture
 from primitives_classes import Sphere, Plane, Triangle, Disc, STLMesh
-from light_classes import PointLight
+from light_classes import PointLight, AreaLight
 from scene import Scene
 
 
-def create_simple_world():
+def create_simple_world(settings=None):
     color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
     color_2 = SolidColor(Vec3(0.8, 0.8, 0))
     color_3 = SolidColor(Vec3(0.8,0.6,0.2))
@@ -57,7 +57,7 @@ def create_simple_world():
     return {'scene': scene, 'camera': camera}
 
 
-def create_simple_world_2():
+def create_simple_world_2(settings=None):
     # use a plane instead of a big sphere!
     color_3 = SolidColor(Vec3(0.2, 0.2, 0.7))
     color_4 = SolidColor(Vec3(0.8,0.6,0.2))
@@ -86,7 +86,7 @@ def create_simple_world_2():
                     focus_dist=20)
     return {'scene': scene, 'camera': camera}
 
-def create_simple_world_3():
+def create_simple_world_3(settings=None):
     # add triangles
     color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
     color_2 = SolidColor(Vec3(0.2, 0.2, 0.7))
@@ -130,7 +130,7 @@ def create_simple_world_3():
     return {'scene': scene, 'camera': camera}
 
 
-def create_random_world():
+def create_random_world(settings=None):
     world = GeometryList()
 
     color_1 = SolidColor(Vec3(0.5,0.5,0.5))
@@ -184,7 +184,7 @@ def create_random_world():
     return {'scene': scene, 'camera': camera}
 
 
-def create_random_world2():
+def create_random_world2(settings=None):
     def random_material():
         choose_mat = random()
 
@@ -241,7 +241,7 @@ def create_random_world2():
     return {'scene': scene, 'camera': camera}
 
 
-def create_checkerboard_world():
+def create_checkerboard_world(settings=None):
     color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
     color_2 = SolidColor(Vec3(0.8,0.6,0.2))
 
@@ -284,7 +284,7 @@ def create_checkerboard_world():
     return {'scene': scene, 'camera': camera}
 
 
-def create_checkerboard_world_2():
+def create_checkerboard_world_2(settings=None):
     odd_color = SolidColor(Vec3(0.2,0.3,0.1))
     even_color = SolidColor(Vec3(0.9,0.9,0.9))
     checker_board = CheckerBoard(even_color, odd_color, spacing=3)
@@ -306,7 +306,7 @@ def create_checkerboard_world_2():
     return {'scene': scene, 'camera': camera}
 
 
-def create_image_texture_world():
+def create_image_texture_world(settings=None):
     silver = SolidColor(Vec3(0.7, 0.7, 0.7))
 
     image_1 = Image.open(Path("./textures/earthlights_dmsp_big.jpg"))
@@ -339,7 +339,7 @@ def create_image_texture_world():
     return {'scene': scene, 'camera': camera}
 
 
-def create_canonical_1():
+def create_canonical_1(settings=None):
     # sphere over a checkerboard!
     silver = SolidColor(Vec3(0.7, 0.7, 0.7))
 
@@ -356,6 +356,7 @@ def create_canonical_1():
 
     if True:  # use checkerboard vs image texture
         diffuse_2 = Lambertian(checker_board, name="checkerboard")
+        # diffuse_2 = Lambertian(odd_color, name="odd_color")
     else:
         diffuse_2 = Lambertian(logo, name="io_logo'")
 
@@ -364,6 +365,7 @@ def create_canonical_1():
     world = GeometryList()
 
     world.add(Sphere(Vec3(0, 1.25, 0.35), 1.0, metal_1))
+    # world.add(Sphere(Vec3(0, 1.0001, 0.35), 1.0, metal_1))
 
     if True:  # use plane vs triangles
         plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0, -1, 0), normal=Vec3(0, 1, 0), material=diffuse_2)
@@ -387,18 +389,28 @@ def create_canonical_1():
         triangle = Triangle(v1, v2, v3, diffuse_2, uv1, uv2, uv3)
         world.add(triangle)
 
-    ambient = Vec3(0.6,0.6,0.6)
+    ambient = Vec3(0.5,0.5,0.5)
+    # ambient = Vec3(0.3,0.3,0.3)
     background = SolidColor(Vec3(0.5, 0.7, 1.0))
     # background = SolidColor(Vec3(0,0,0))
-    light_1 = PointLight(pos=Vec3(11,10,3), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
-    lights = [light_1]
+    # light_1 = PointLight(pos=Vec3(11,10,3), color=Vec3(0.25, 0.25, 0.25))
+
+    geom = Disc(center=Vec3(11,10,3), normal=Vec3(0,-1,0), radius=1.5, material=SolidColor(Vec3(0.7, 0.7, 0.7)))
+    if settings and 'SAMPLES_PER_LIGHT' in settings:
+        samples = settings['SAMPLES_PER_LIGHT']
+    else:
+        samples = 25
+
+        light_2 = AreaLight(geom=geom, color=Vec3(0.6, 0.6, 0.6), num_samples=samples)
+
+    lights = [light_2]
     scene = Scene(world, ambient=ambient, lights=lights, background=background)
     camera = Camera(look_from=Vec3(8.5, 4, 0), look_at=Vec3(0, 1, 0), vup=Vec3(0, 1, 0), vert_fov=25)
 
     return {'scene': scene, 'camera': camera}
 
 
-def create_canonical_2():
+def create_canonical_2(settings=None):
     """
     teapot time!
 
@@ -491,7 +503,7 @@ def create_canonical_2():
 
 
 
-def create_stl_mesh():
+def create_stl_mesh(settings=None):
     """
     TODO:
         scale the model
@@ -502,6 +514,7 @@ def create_stl_mesh():
     red = SolidColor(Vec3(0.5, 0.2, 0.2))
     purple = SolidColor(Vec3(0.4, 0.1, 0.4))
     gray = SolidColor(Vec3(0.2, 0.2, 0.2))
+    med_gray = SolidColor(Vec3(0.4, 0.4, 0.4))
     light_gray = SolidColor(Vec3(0.9, 0.9, 0.9))
     dark_gray = SolidColor(Vec3(0.1, 0.1, 0.1))
     black = SolidColor(Vec3(0.0, 0.0, 0.0))
@@ -522,10 +535,17 @@ def create_stl_mesh():
     #             'plane_x': 25, 'plane_y': -15, 'back_plane_z': -30, 'front_plane_z': 15,
     #             'rot_axis': None, 'rot_rads': None, 'show_walls': True}
 
-    stl_filename ="models/IO_Sample_Hexagon.stl"
-    settings = {'look_from': Vec3(-10.0, 100, 80), 'look_at': Vec3(0, 30.0, -4),
-                'plane_x': 50, 'plane_y': -10, 'back_plane_z': -35, 'front_plane_z': 15,
-                'rot_axis': None, 'rot_rads': None, 'translate': [-23, -5, -10], 'show_walls': True}
+    # stl_filename ="models/IO_Sample_Hexagon.stl"
+    # settings = {'look_from': Vec3(-10.0, 90, 100), 'look_at': Vec3(0, 27.0, -4),
+    #             'plane_x': 50, 'plane_y': -10, 'back_plane_z': -35, 'front_plane_z': 15,
+    #             'rot_axis': None, 'rot_rads': None, 'translate': [-23, -5, -10], 'show_walls': True}
+
+    # Stanford bunny - BBOX=vmin = (-23.551, -42.010, 5.275), vmax = (84.196, 45.792, 113.167)), num_triangles = 112402
+    # rotated by 90 deg on the X axis... bbox=AABB(vmin=(-48.551, 5.275, -45.792), vmax=(59.196, 113.167, 42.010)), num_triangles=112402
+    stl_filename = "models/Bunny.stl"
+    settings = {'look_from': Vec3(0.0, 100, 350), 'look_at': Vec3(0, 50.0, 0),
+    'plane_x': 120, 'plane_y': 5.275, 'back_plane_z': -85, 'front_plane_z': 350,
+    'rot_axis': [1,0,0], 'rot_rads': math.pi/2, 'translate': [-25, 0, 0], 'show_walls': True}
 
     # stl_filename ="models/sn_logo.stl"
     # stl_filename ="models/modern_hexagon_revised.stl"
@@ -538,25 +558,37 @@ def create_stl_mesh():
     image_2 = Image.open(Path("./textures/IO_logo.png"))
     logo = ImageTexture(image_2)  # images are across the entire checkerboard, not a single square?
 
-    checked = CheckerBoard(dark_gray, light_gray, spacing=0.5)
+    # checked = CheckerBoard(dark_gray, light_gray, spacing=0.5)
+    checked = CheckerBoard(dark_gray, light_gray, spacing=0.1)
 
     diffuse_red = Lambertian(red, name="red'")
     diffuse_blue = Lambertian(blue, name="blue'")
     diffuse_gray = Lambertian(gray, name="gray'")
+    diffuse_med_gray = Lambertian(med_gray, name="med_gray'")
+    diffuse_light_gray = Lambertian(light_gray, name="light_gray'")
     metal_1 = Metal(silver, name="metal_1")
     logo_matl = Lambertian(logo, name="logo")
     # dielectric_1 = Dielectric(1.5, name="dielectric_1")
     checkerboard = Lambertian(checked, name="gray'")
+    dielectric = Dielectric(1.0, "dielectric")
 
     # object_matl = metal_1
-    object_matl = diffuse_gray
-    ground_matl = checkerboard
+    # object_matl = diffuse_gray
+    object_matl = diffuse_light_gray
+    # object_matl = dielectric
+    ground_matl = diffuse_gray
+    # ground_matl = checkerboard
+    # ground_matl = logo_matl
     # right_wall_matl = diffuse_red
-    right_wall_matl = metal_1
+    # right_wall_matl = metal_1
+    right_wall_matl = diffuse_light_gray
     # left_wall_matl = diffuse_blue
-    left_wall_matl = metal_1
+    # left_wall_matl = metal_1
+    left_wall_matl = diffuse_light_gray
     # back_wall_matl = logo_matl
-    back_wall_matl = metal_1
+
+    # back_wall_matl = metal_1
+    back_wall_matl = checkerboard
 
     world = GeometryList()
 
@@ -641,10 +673,17 @@ def create_stl_mesh():
     print(f'stl_mesh {stl_filename} -- bbox={stl_mesh.bounding_box(None, None)}, num_triangles={stl_mesh.num_triangles}')
     world.add(stl_mesh)
 
-    ambient = Vec3(0.6, 0.6, 0.6)
+    ambient = Vec3(0.5, 0.5, 0.5)
+    # ambient = Vec3(0.3, 0.3, 0.3)
     background = SolidColor(Vec3(0.5, 0.7, 1.0))
-    light_1 = PointLight(pos=Vec3(-10.0, 100, 80), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
-    lights = [light_1]
+    light_1 = PointLight(pos=Vec3(-10.0, 100, 80), color=Vec3(0.2, 0.2, 0.2))
+    # disc_1 = Disc(center=Vec3(-15,110,20), normal=Vec3(-1,-20,-0.5), radius=5.0, material=diffuse_gray)
+    # disc_1 = Disc(center=Vec3(-15,110,20), normal=Vec3(0,-1,0), radius=15.0, material=diffuse_gray)
+    disc_1 = Disc(center=Vec3(-30,130,25), normal=Vec3(0.15, -1, 0.15), radius=8.0, material=diffuse_med_gray)
+    light_2 = AreaLight(geom=disc_1, color=Vec3(0.5, 0.5, 0.5))
+    # lights = [light_1]
+    lights = [light_2]
+    # lights = [light_1, light_2]
     scene = Scene(world, ambient=ambient, lights=lights, background=background)
 
     # camera = Camera(look_from=Vec3(8.5, 4, 0), look_at=Vec3(0, 1, 0), vup=Vec3(0, 1, 0), vert_fov=25)
@@ -656,7 +695,7 @@ def create_stl_mesh():
     return {'scene': scene, 'camera': camera}
 
 
-def create_quad_world():
+def create_quad_world(settings=None):
     color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
     color_2 = SolidColor(Vec3(0.8, 0.8, 0))
     color_3 = SolidColor(Vec3(0.8,0.6,0.2))
@@ -700,7 +739,7 @@ def create_quad_world():
     return {'scene': scene, 'camera': camera}
 
 
-def create_disc_test_world():
+def create_disc_test_world(settings=None):
     color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
     color_2 = SolidColor(Vec3(0.8, 0.8, 0))
     color_3 = SolidColor(Vec3(0.8,0.6,0.2))

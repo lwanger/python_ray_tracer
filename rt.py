@@ -21,10 +21,10 @@ CREATOR_FUNC = create_canonical_1
 
 
 res_settings = {
-        'low': { 'x_size': 100, 'chunk_size': 10, 'samples_per_pixel': 10, 'max_depth': 10 },
-        'med': { 'x_size': 200, 'chunk_size': 25, 'samples_per_pixel': 25, 'max_depth': 20 },
-        'high': { 'x_size': 384, 'chunk_size': 25, 'samples_per_pixel': 50, 'max_depth': 25 },
-        'ultra': { 'x_size': 1024, 'chunk_size': 25, 'samples_per_pixel': 100, 'max_depth': 50 },
+        'low': { 'x_size': 100, 'chunk_size': 10, 'samples_per_pixel': 10, 'samples_per_light': 10, 'max_depth': 10 },
+        'med': { 'x_size': 200, 'chunk_size': 25, 'samples_per_pixel': 25, 'samples_per_light': 20, 'max_depth': 20 },
+        'high': { 'x_size': 384, 'chunk_size': 25, 'samples_per_pixel': 50, 'samples_per_light': 50, 'max_depth': 25 },
+        'ultra': { 'x_size': 1024, 'chunk_size': 25, 'samples_per_pixel': 100, 'samples_per_light': 100, 'max_depth': 50 },
 }
 
 
@@ -44,6 +44,7 @@ def get_render_settings():
     settings['aspect_ratio'] = aspect_ratio
     settings['chunk_size'] = int(env_or_defaults('CHUNK_SIZE', settings['chunk_size']))
     settings['samples_per_pixel'] = int(env_or_defaults('SAMPLES_PER_PIXEL', settings['samples_per_pixel']))
+    settings['samples_per_light'] = int(env_or_defaults('SAMPLES_PER_LIGHT', settings['samples_per_light']))
     settings['max_depth'] = int(env_or_defaults('MAX_DEPTH', settings['max_depth']))
     settings['image_filename'] = env_or_defaults('IMAGE_FILENAME', 'rt.png')
 

@@ -21,6 +21,7 @@ can use the following environment variables (or stored in .env file):
     X_SIZE: x size of the rendered image
     ASPECT_RATIO: aspect ratio of the rendered image -- used to calculate y size (default is 16:9)
     SAMPLES_PER_PIXEL: samples per pixel
+    SAMPLES_PER_LIGHT: samples per light
     MAX_DEPTH: maximum depth of bounces per pixel
     CHUNK_SIZE: size of chunks to calculate (e.g. value of 10 is 10x10 pixel blocks)
     RANDOM_CHUNKS: whether rendered chunks are in order or random (True - default)
@@ -56,8 +57,8 @@ from create_scene_funcs import *
 # CREATOR_FUNC = create_checkerboard_world_2
 # CREATOR_FUNC = create_image_texture_world
 # CREATOR_FUNC = create_canonical_1  # ball over plane
-CREATOR_FUNC = create_canonical_2  # teapot
-# CREATOR_FUNC = create_stl_mesh
+# CREATOR_FUNC = create_canonical_2  # teapot
+CREATOR_FUNC = create_stl_mesh
 # CREATOR_FUNC = create_quad_world
 # CREATOR_FUNC = create_disc_test_world
 
@@ -117,6 +118,7 @@ def render_worker(start, end, pipe_conn):
 class App(tk.Frame):
     def __init__(self):
         settings = get_render_settings()
+        self.render_settings = settings
         self.x_size = settings['x_size']
         self.aspect_ratio = settings['aspect_ratio']
         self.chunk_size = settings['chunk_size']
@@ -134,7 +136,7 @@ class App(tk.Frame):
         self.vertical = settings['vertical']
         self.lower_left = settings['lower_left']
 
-        self.world_creator = CREATOR_FUNC
+        self.world_creator = CREATOR_FUNC(settings)
 
         self.create_gui()
         self.start_button_start = True  # False, means it's changed to cancel button
@@ -271,7 +273,7 @@ class App(tk.Frame):
         self.status_str.set(f'creating world...')
         self.root.update_idletasks()
 
-        world = self.world_creator()
+        world = self.world_creator
         self.world = world['scene']
         self.camera = world['camera']
 

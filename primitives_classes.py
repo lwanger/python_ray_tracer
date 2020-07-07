@@ -483,7 +483,6 @@ class Disc(Geometry):
         u2 = self.u_vec.mul_val(u)
         v2 = self.v_vec.mul_val(v)
         p = self.center + u2 + v2
-        self.point_on_plane(p)
         return p
 
 

@@ -23,11 +23,13 @@ for example, run: python listing_60.py
 optional environment variables:
 
     - SAMPLES_PER_PIXEL (int e.g. 50)
+    - SAMPLES_PER_LIGHT (int e.g. 100)
     - USE_RES: low', 'med', 'high', or 'ultra'. Sets to the settings in res_settings. Each can be overwritten by the
         variables below.
     - X_SIZE: x size of the rendered image
     - ASPECT_RATIO: aspect ratio of the rendered image -- used to calculate y size (default is 16:9)
     - SAMPLES_PER_PIXEL: samples per pixel
+    - SAMPLES_PER_LIGHT: samples per light source
     - MAX_DEPTH: maximum depth of bounces per pixel
     - CHUNK_SIZE: size of chunks to calculate (e.g. value of 10 is 10x10 pixel blocks)
     - RANDOM_CHUNKS: whether rendered chunks are in order or random (True - default)
