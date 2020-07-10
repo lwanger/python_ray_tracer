@@ -14,12 +14,13 @@ from random import random, uniform
 from pathlib import Path
 from PIL import Image
 
+import colorcet as cc
 from stl import mesh  # numpy-stl
 
 from geometry_classes import Vec3, GeometryList, Camera
 from geometry_classes import random_on_unit_sphere
 from material_classes import Lambertian, Metal, Dielectric
-from texture_classes import SolidColor, CheckerBoard, ImageTexture
+from texture_classes import SolidColor, CheckerBoard, ImageTexture, NoiseTexture
 from primitives_classes import Sphere, Plane, Triangle, Disc, STLMesh
 from light_classes import PointLight, AreaLight
 from scene import Scene
@@ -498,6 +499,90 @@ def create_canonical_2(settings=None):
     camera = Camera(look_from=look_from, look_at=look_at, vup=Vec3(0, 1, 0), vert_fov=25)
 
     #TEAPOT_thingiverse.stl - vmin=(-15.000, -10.005, -9.088), vmax=(16.371, 10.005, 7.162), num_triangles=87298
+
+    return {'scene': scene, 'camera': camera}
+
+
+def hex_to_rgb(hex):
+    # convert from hex string ("#FFFFFF") to rgb
+    return ( int(hex[1:3], 16) / 255.999, int(hex[3:5], 16) / 255.999, int(hex[5:], 16) / 255.999 )
+
+
+def get_color(val, colormap=cc.m_fire):
+    # use colorcet to get color value
+    colormap_val = colormap[val]
+
+    if isinstance(colormap_val, str):  # colormap is in hex
+        color = hex_to_rgb(colormap_val)
+        return color
+    else:
+        return colormap_val
+
+def create_perlin_1(settings=None):
+    # sphere over a plane!
+    silver = SolidColor(Vec3(0.7, 0.7, 0.7))
+
+    palette = cc.fire
+    palette2 = cc.kgy
+    colormap = [get_color(i, palette) for i in range(len(palette))]
+    colormap2 = [get_color(i, palette2) for i in range(len(palette2))]
+    # colormap2 = [get_color(i, palette2) for i in range(len(palette2//2))]
+    noise = NoiseTexture(colormap, name='fire')
+    noise2 = NoiseTexture(colormap2, name='jade')
+
+    odd_color = SolidColor(Vec3(0.2, 0.75, 0.2))
+    even_color = SolidColor(Vec3(0.1, 0.1, 0.1))
+    checker_board = CheckerBoard(even_color, odd_color, spacing=2.0)
+
+    diffuse_1 = Lambertian(noise, name="noise'")
+    diffuse_2 = Lambertian(noise2, name="noise'")
+    # diffuse_2 = Lambertian(checker_board, name="checkerboard")
+    metal_1 = Metal(silver, name="metal_1")
+    # metal_1 = Metal(noise2, name="metal_1")
+
+    world = GeometryList()
+
+    world.add(Sphere(Vec3(0, 1.25, 0.35), 1.0, diffuse_2))
+    # world.add(Sphere(Vec3(0, 1.25, 0.35), 1.0, metal_1))
+
+    # if True:  # use plane vs triangles
+    if False:
+        plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(0, -1, 0), normal=Vec3(0, 1, 0), material=diffuse_1)
+        world.add(plane_1)
+    else:
+        plane_x = 2
+        plane_y = -1
+        back_plane_z = -2
+        front_plane_z = 3
+        v0 = Vec3(-plane_x, plane_y, front_plane_z)
+        uv0 = (0,0)
+        v1 = Vec3(-plane_x ,plane_y,back_plane_z)
+        uv1 = (0, 1)
+        v2 = Vec3(plane_x, plane_y, front_plane_z)
+        uv2 = (1, 0)
+        v3 = Vec3(plane_x, plane_y,back_plane_z)
+        uv3 = (1, 1)
+        triangle = Triangle(v0, v1, v2, diffuse_1, uv0, uv1, uv2)
+        world.add(triangle)
+
+        triangle = Triangle(v1, v2, v3, diffuse_1, uv1, uv2, uv3)
+        world.add(triangle)
+
+    ambient = Vec3(0.5,0.5,0.5)
+    background = SolidColor(Vec3(0.5, 0.7, 1.0))
+
+    geom = Disc(center=Vec3(11,10,3), normal=Vec3(0,-1,0), radius=1.5, material=SolidColor(Vec3(0.7, 0.7, 0.7)))
+    if settings and 'SAMPLES_PER_LIGHT' in settings:
+        samples = settings['SAMPLES_PER_LIGHT']
+    else:
+        samples = 25
+
+        # light_1 = PointLight(pos=Vec3(-10.0, 100, 80), color=Vec3(0.2, 0.2, 0.2))
+        light_2 = AreaLight(geom=geom, color=Vec3(0.6, 0.6, 0.6), num_samples=samples)
+
+    lights = [light_2]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
+    camera = Camera(look_from=Vec3(8.5, 4, 0), look_at=Vec3(0, 1, 0), vup=Vec3(0, 1, 0), vert_fov=25)
 
     return {'scene': scene, 'camera': camera}
 

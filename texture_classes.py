@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 import math
 
 from geometry_classes import Vec3, lerp
+from perlin import ValueNoise3D
 
 
 class Texture(ABC):
@@ -88,3 +89,22 @@ class ImageTexture(Texture):
             RuntimeError(f'ImageTexture::value: getpixel index error (x={x}, y={y})')
 
         return Vec3(pixel[0]/255.999, pixel[1]/255.999, pixel[2]/255.999)
+
+
+class NoiseTexture(Texture):
+    # Perlin noise texture
+    def __init__(self, colormap=None, name='noise_texture'):
+        super().__init__(uv_used=False, name=name)
+        self.noise = ValueNoise3D()
+        self.colormap = colormap
+
+    def __repr__(self):
+        return f'NoiseTexture(name={self.name})'
+
+    def value(self, u: float, v: float, p: Vec3) -> Vec3:
+        val = self.noise.eval(p.x, p.y, p.z)
+        if self.colormap is None:
+            return Vec3(val, val, val)
+        else:
+            color = self.colormap[int(val*(len(self.colormap)-0.001))]
+            return Vec3(*color)
