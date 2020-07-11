@@ -18,12 +18,13 @@ import colorcet as cc
 from stl import mesh  # numpy-stl
 
 from geometry_classes import Vec3, GeometryList, Camera
-from geometry_classes import random_on_unit_sphere
+from geometry_classes import random_on_unit_sphere, get_color
 from material_classes import Lambertian, Metal, Dielectric
 from texture_classes import SolidColor, CheckerBoard, ImageTexture, NoiseTexture
 from primitives_classes import Sphere, Plane, Triangle, Disc, STLMesh
 from light_classes import PointLight, AreaLight
 from scene import Scene
+from perlin import value_noise, turbulent_noise, fractal_noise
 
 
 def create_simple_world(settings=None):
@@ -503,21 +504,6 @@ def create_canonical_2(settings=None):
     return {'scene': scene, 'camera': camera}
 
 
-def hex_to_rgb(hex):
-    # convert from hex string ("#FFFFFF") to rgb
-    return ( int(hex[1:3], 16) / 255.999, int(hex[3:5], 16) / 255.999, int(hex[5:], 16) / 255.999 )
-
-
-def get_color(val, colormap=cc.m_fire):
-    # use colorcet to get color value
-    colormap_val = colormap[val]
-
-    if isinstance(colormap_val, str):  # colormap is in hex
-        color = hex_to_rgb(colormap_val)
-        return color
-    else:
-        return colormap_val
-
 def create_perlin_1(settings=None):
     # sphere over a plane!
     silver = SolidColor(Vec3(0.7, 0.7, 0.7))
@@ -525,17 +511,43 @@ def create_perlin_1(settings=None):
     palette = cc.fire
     palette2 = cc.kgy
     colormap = [get_color(i, palette) for i in range(len(palette))]
-    colormap2 = [get_color(i, palette2) for i in range(len(palette2))]
-    # colormap2 = [get_color(i, palette2) for i in range(len(palette2//2))]
-    noise = NoiseTexture(colormap, name='fire')
-    noise2 = NoiseTexture(colormap2, name='jade')
+    # colormap2 = [get_color(i, palette2) for i in range(len(palette2))]
+    colormap2 = [get_color(i, palette2) for i in range(len(palette2)//2)]
+
+    # noise2 = NoiseTexture(colormap2, point_scale=5.0, name='jade')
+    # noise2 = NoiseTexture(colormap, point_scale=5.0, eval_func=value_noise, name='jade')
+
+    frequency = 0.02
+    frequency_mult = 1.8
+    amplitude_mult = 0.35
+    num_layers = 5
+    # sub_val = -0.559
+    sub_val = 0.0
+    # div_val = .5227 - sub_val
+    div_val = .5227
+
+    kwargs={ 'frequency': frequency, 'frequency_mult': frequency_mult, 'amplitude_mult': amplitude_mult,
+             'layers': num_layers, 'sub_val': sub_val, 'div_val': div_val}
+
+    # sub_val = 0.458
+    sub_val = 0.0
+    # div_val = 2.742 - sub_val
+    div_val = 2.742
+
+    kwargs2 = {'frequency': frequency, 'frequency_mult': frequency_mult, 'amplitude_mult': amplitude_mult,
+              'layers': num_layers, 'sub_val': sub_val, 'div_val': div_val}
+
+    noise = NoiseTexture(colormap, point_scale=2.0, name='fire', eval_func=fractal_noise, eval_kwargs=kwargs)
+
+    noise2 = NoiseTexture(colormap2, point_scale=10.0, eval_func=turbulent_noise, eval_kwargs=kwargs2, name='jade')
 
     odd_color = SolidColor(Vec3(0.2, 0.75, 0.2))
     even_color = SolidColor(Vec3(0.1, 0.1, 0.1))
     checker_board = CheckerBoard(even_color, odd_color, spacing=2.0)
 
+    # diffuse_1 = Lambertian(checker_board, name="noise'")
     diffuse_1 = Lambertian(noise, name="noise'")
-    diffuse_2 = Lambertian(noise2, name="noise'")
+    diffuse_2 = Lambertian(noise2, name="noise2")
     # diffuse_2 = Lambertian(checker_board, name="checkerboard")
     metal_1 = Metal(silver, name="metal_1")
     # metal_1 = Metal(noise2, name="metal_1")

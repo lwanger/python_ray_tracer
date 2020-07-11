@@ -42,51 +42,53 @@ Lots of fun stuff to do on the ray tracing:
     - update material to: Ka, Kd, Ks
     - better creator function handling
 
-- new features:
+- TODO: features:
     - ray casting
     - use trimesh for mesh i/o?
-    - Area lights - triangle, disc, sphere (attenuate contribution) -- random sampling on primitive (point_on?)
-        - random point in triangle (https://math.stackexchange.com/questions/18686/uniform-random-point-in-triangle)
-    - Disc primitive
     - parallelogram primitive? - planar quad from two vectors... easy hit and UV? [rectangle a sub-class]
         - intersection - https://math.stackexchange.com/questions/2461034/raytracing-a-parallelogram-ray-parallelogram-intersection
             or https://stackoverflow.com/questions/59128744/raytracing-ray-vs-parallelogram
             or rectangle: https://stackoverflow.com/questions/21114796/3d-ray-quad-intersection-test-in-java
         - point on - https://math.stackexchange.com/questions/3537762/random-point-in-a-triangle
-    - profile / optimize
-        - nuitka? numba? C routine for hits? (ctypes?)
-        - NVidia Optix (https://developer.nvidia.com/optix & https://github.com/ozen/pyoptix)
-        - Embree/pyembree (https://www.embree.org/ & http://embree.github.com)    
-    - multi-processing
+    - profile / optimize (see performance below)
     - de-noising
     - more scenes and models (bunnies, dragons), sphereflake
     - quads
-    - run batch / animation
-    - solid textures & Perlin noise
-         - https://www.scratchapixel.com/lessons/procedural-generation-virtual-worlds/procedural-patterns-noise-part-1/creating-simple-1D-noise
-         
-         # use settable grid size (256 or 512 pts) -- test w/ 2D plots -- if power of two can use bit & instead of modulo
-         # mask = 256-1,  b = a & MASK
-         # random number (0..1) on grid points. LERP between them, LERP between last pt and first point for repeating.
-         float smoothstepRemap(const float &a, const float &b, const float &t) 
-            { 
-                float tRemapSmoothstep = t * t * (3 - 2 * t); 
-                return Mix(a, b, tRemapSmoothstep); 
-            } 
-         # or better: 6t^5−15t^4+10t^3
-         # offset by phase (x+) and frequency (x*)
+    - run batch / animation / save as animated GIF?
     - importance sampling
-    - preview mode (https://github.com/snavely/pyrender ?)
+    - scene preview mode (https://github.com/snavely/pyrender ?)
     - OpenSurfaces (http://opensurfaces.cs.cornell.edu/)
     - reaction/diffusion textures
     - texture repeat/tiling/mirroring
 
 Implemented Features:
-    - Primitives: Spheres, Triangles, Planes, STL Files (triangle meshes)
+    - Primitives: Sphere, Disc Triangle, Plane, STL Files (triangle meshes)
     - Texture mapping: SolidColor, CheckerBoard, ImageTexture
-    - Lighting: Point lights
-    - Shadow rays for shadowing
+    - Noise textures using Perlin noise for solid textures.
+    - Lighting: Point lights, Area lights (can use any Geomtey with a point_on method -- triangle, disc, 
+        sphere, etc.) 
+    - Shadow rays for shadowing. Area lights drive their own shadow ray sampling for soft shadows.
     - BVH (bounding volume hieraerchy)
     - models: teapots, bunnies, etc.
+    
+Performance:
 
+Python is a really bad language to implement a ray tracer in, as it's performance is really bad for tight loops
+ performing lots of math computation. That being said a number of things have been done to improve performance:
+ 
+- Initially everything was going through a Vec3 class which implemented methods, such as: dot, cross, __add__, 
+__sub__, __mul__, __div__, etc. The dunder operator methods (e.g. __mul__) could multiply by a scalar (number)
+or Vec3. A huge amount of performance was tied up in isinstance calls (i.e. issintance(val, type.Number)). So the
+dunder methods were replaced to just work with Vec3's and mul_val and div_val added for scalars.
+
+TODO: Performance:
+    - numba
+    - nuitka? numba? C routine for hits? (ctypes?)
+    - NVidia Optix (https://developer.nvidia.com/optix & https://github.com/ozen/pyoptix)
+    - Embree/pyembree (https://www.embree.org/ & http://embree.github.com)    
+    - replace Vec3 class with list of tuple
+    - implement hit in C.
+    - multiprocessing
+
+--
 Len Wanger -- 2020

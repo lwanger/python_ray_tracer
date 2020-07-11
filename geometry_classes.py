@@ -122,6 +122,23 @@ def surrounding_box(box1: "AABB", box2: "AABB") -> "AABB":
 
     return AABB(new_min, new_max)
 
+def hex_to_rgb(hex):
+    # convert from hex string ("#FFFFFF") to rgb (1.0,1.0,1.0)
+    return ( int(hex[1:3], 16) / 255.999, int(hex[3:5], 16) / 255.999, int(hex[5:], 16) / 255.999 )
+
+
+def get_color(val, colormap):
+    # get rgb color from a color map, colormap is a list/tuple, where each entry is either a
+    # single float value 0.0-1.0, or a list of strings of hex values for the color. Can use
+    # Compatible with colorcet colormaps (e.g colormap==cc.fire)
+    colormap_val = colormap[val]
+
+    if isinstance(colormap_val, str):  # colormap is in hex
+        color = hex_to_rgb(colormap_val)
+        return color
+    else:
+        return colormap_val
+
 
 class Vec3():
     def __init__(self, x,y,z):

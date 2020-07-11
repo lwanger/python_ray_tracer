@@ -25,6 +25,8 @@ import numpy as np
 
 import colorcet as cc
 
+from geometry_classes import get_color, clamp
+
 import cooked_input as ci
 
 from framebuffer import FrameBuffer
@@ -52,6 +54,10 @@ def stripes(x: float, f: float) -> float:
    return t * t - .5
 
 
+def fmt_list(lst):
+    return f'[{", ".join((f"{v:0.2f}" for v in lst) )}]'
+
+
 class ValueNoise3D():
     # Perlin noise
     def __init__(self):
@@ -75,6 +81,16 @@ class ValueNoise3D():
         self.perm_y_table = temp_table + temp_table
         shuffle(temp_table)
         self.perm_z_table = temp_table + temp_table
+
+
+    def __repr__(self):
+        rs = [repr(vec) for vec in self.r[:5]]
+        r_s = f'[{", ".join(rs)}]'
+        px_s = fmt_list(self.perm_x_table[:5])
+        py_s = fmt_list(self.perm_y_table[:5])
+        pz_s = fmt_list(self.perm_z_table[:5])
+        # return f'r[:5]={fmt_list(self.r[:5])}, perm_x[:5]={fmt_list(self.perm_x_table[:5])}, perm_y[:5]={fmt_list(self.perm_y_table[:5])}, perm_z[:5]={fmt_list(self.perm_z_table[:5])}'
+        return f'r[:5]={r_s}, perm_x[:5]={px_s}, perm_y[:5]={py_s}, perm_z[:5]={pz_s}'
 
 
     def perlin_interp(self, c: Vec3, u: float, v: float, w: float) -> float:
@@ -112,36 +128,6 @@ class ValueNoise3D():
 
         return self.perlin_interp(c, su, sv, sw)
 
-
-def fractal_noise(noise, x, y, frequency, frequency_mult, amplitude_mult, layers=5):
-    px = x * frequency
-    py = y * frequency
-    amplitude = 1
-    val = 0
-
-    for l in range(layers):
-        # val += noise.eval(px, py) * amplitude
-        val += noise.eval(px, py, 0) * amplitude
-        px *= frequency_mult
-        py *= frequency_mult
-        amplitude *= amplitude_mult
-
-    return val
-
-
-def turbulent_noise(noise, x, y, frequency, frequency_mult, amplitude_mult, layers=5):
-    px = x * frequency
-    py = y * frequency
-    amplitude = 1
-    val = 0
-
-    for l in range(layers):
-        val += abs((2 * noise.eval(px, py) - 1) * amplitude)
-        px *= frequency_mult
-        py *= frequency_mult
-        amplitude *= amplitude_mult
-
-    return val
 
 def lumpy_noise(noise, px, py, scale=0.03, lumpiness=8):
     # LUMPY: 	 .03 * noise(8*x,8*y,8*z)
@@ -186,37 +172,74 @@ def wood_pattern(noise, x, y, frequency=0.01):
     val = g - int(g)
     return val
 
+###
+# noise functions to pass in to NoiseTexture eval-func
+###
+# def value_noise(noise, i, j, k, frequency=1.0, translate=0.0, scale=1.0):
+def value_noise(noise, i, j, k, frequency=1.0):
+    val = noise.eval(i, j, k) * frequency
+    # val = (val + translate) * scale  # shift and scale to 0.0-1.0
+    # val = clamp(val, 0.0, 1.0)  # clamp to 0.0-1.0
+    return val
+    # return noise.eval(i, j, k) * frequency
 
-def hex_to_rgb(hex):
-    # convert from hex string ("#FFFFFF") to rgb
-    return ( int(hex[1:3], 16) / 255.999, int(hex[3:5], 16) / 255.999, int(hex[5:], 16) / 255.999 )
+
+def turbulent_noise(noise, i, j, k, frequency, frequency_mult, amplitude_mult, layers=5, sub_val=0.0, div_val=1.0):
+    pi = i * frequency
+    pj = j * frequency
+    pk = k * frequency
+    amplitude = 1
+    val = 0
+
+    for l in range(layers):
+        # val += abs((2 * noise.eval(pi, pj) - 1) * amplitude)
+        val += abs((2 * noise.eval(pi, pj, pk) - 1) * amplitude)
+        pi *= frequency_mult
+        pj *= frequency_mult
+        amplitude *= amplitude_mult
+
+    # val = (val-sub_val) / div_val
+    scaled_val = val / div_val
+    return (0.5 * (1.0 + scaled_val))
+    # return val
 
 
-# @functools.lru_cache(maxsize=None)
-def get_color(val, colormap=cc.m_fire):
-    # use colorcet to get color value
-    colormap_val = colormap[val]
+def fractal_noise(noise, i, j, k, frequency, frequency_mult, amplitude_mult, layers=5, sub_val=0.0, div_val=1.0):
+    pi = i * frequency
+    pj = j * frequency
+    pk = k * frequency
+    amplitude = 1
+    val = 0
 
-    if isinstance(colormap_val, str):  # colormap is in hex
-        color = hex_to_rgb(colormap_val)
-        return color
-    else:
-        return colormap_val
+    for l in range(layers):
+        val += noise.eval(pi, pj, pk) * amplitude
+        pi *= frequency_mult
+        pj *= frequency_mult
+        pk *= frequency_mult
+        amplitude *= amplitude_mult
+
+    # val = (val-sub_val) / div_val
+    scaled_val = val / div_val
+    return (0.5 * (1.0 + scaled_val))
+    # return val
+
 
 if __name__ == '__main__':
     # palettes: see: https://colorcet.holoviz.org/user_guide/index.html
     # examples: fire, colorwheel, bkr, bky, bwy coolwarm isolum gray dim_gray cwr kgy kb kg kr kbc blues rainbow
-    palette = cc.fire
+    # palette = cc.fire
     # palette = cc.coolwarm
-    # palette = cc.dimgray
+    palette = cc.dimgray
     # palette = cc.kgy  # jade
     # palette = cc.kbc
     # palette = cc.blues  # clouds?
     # palette = cc.rainbow
     # palette = cc.CET_CBC1  # wood? use part of range
     colormap = [get_color(i,palette) for i in range(len(palette))]
-    im_width = 512
-    im_height = 512
+    # im_width = 512
+    im_width = 32
+    # im_height = 512
+    im_height = 32
     # fb = FrameBuffer(x_size=im_width, y_size=im_height)  # depth = "s" for monochrome
     fb = FrameBuffer(x_size=im_width, y_size=im_height, depth="rgb")
 
@@ -225,15 +248,28 @@ if __name__ == '__main__':
 
     noise = ValueNoise3D()
 
-    if False:  # value noise
-    # if True:  # value noise
+    # if False:  # value noise
+    if True:  # value noise
         freq = 0.5
 
         for j in range(im_height):
             for i in range(im_width):
                 # val = noise.eval(i,j) * freq
-                val = noise.eval(i,j,1) * freq
+                val = value_noise(noise, i+0.1, j+0.1, 0.1, freq)
+                # val = noise.raw_noise(0, 0, Vec3(i+0.1, j+0.1, 0.1)) #  () value_noise(noise, i+0.1, j+0.1, 0.1, freq)
+
+                val = (val + 0.05) * 10  # min is -0.06 - 0.06 map to 0.0-1.0
+                val = clamp(val, 0.0, 1.0)
+
                 fb.set_pixel(i, j, colormap[int(val * 255.999)])
+                noise_map[j][i] = val
+
+        print('\tCalculating statistics')
+        min = np.amin(noise_map, axis=None)
+        max = np.max(noise_map)
+        mean = np.mean(noise_map)
+        stddev = np.std(noise_map)
+        print(f'stats: min={min:0.4f}, max={max:0.4f}, mean={mean:0.4f}, stddev={stddev:0.4f}')
 
     elif True: # fractal noise
     # elif False: # fractal noise
@@ -242,17 +278,30 @@ if __name__ == '__main__':
         amplitudeMult = 0.35
         numLayers = 5
         maxNoiseVal = 0
+        minNoiseVal = 1000000
+
+        # fractal min=-0.5589, max=.52269
+        # turbuent min=0.458, max=2.741
+        # sub_val = 0.458
+        sub_val = 0
+        # div_val = 2.742-sub_val
+        div_val = 1.0
 
         for j in range(im_height):
             for i in range(im_width):
-                val = fractal_noise(noise, i, j, frequency, frequencyMult, amplitudeMult, layers=5)
-                # val = turbulent_noise(noise, i, j, frequency, frequencyMult, amplitudeMult, layers=5)
+                val = fractal_noise(noise, i, j, 0, frequency, frequencyMult, amplitudeMult, layers=5,
+                                    sub_val=sub_val, div_val=div_val)
+                # val = turbulent_noise(noise, i, j, 0, frequency, frequencyMult, amplitudeMult,
+                #                       layers=5, sub_val=sub_val, div_val=div_val)
                 # val = marble_pattern(noise, i, j, frequency, frequencyMult, amplitudeMult, layers=5)
                 # val = lumpy_noise(noise, i, j)
                 # val = crinkly_noise(noise, i, j, scale=-0.1)  #  needs debugging
                 # val = marble_pattern2(noise, i, j)
                 noise_map[j,i] = val
                 maxNoiseVal = max(val, maxNoiseVal)
+                minNoiseVal = min(val, minNoiseVal)
+
+        print(f'minNoiseVal={minNoiseVal}, maxNoiseVal={maxNoiseVal}')
 
         for j in range(im_height):
             for i in range(im_width):
