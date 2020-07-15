@@ -15,6 +15,7 @@ import math
 from random import random, uniform
 from typing import Optional
 
+
 from geometry_classes import Vec3, Ray, Geometry, GeometryList, BVHNode, HitRecord, AABB, dot, cross
 from geometry_classes import random_on_unit_sphere
 from material_classes import Material
