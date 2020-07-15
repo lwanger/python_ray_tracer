@@ -88,7 +88,7 @@ class ImageTexture(Texture):
         except IndexError:
             RuntimeError(f'ImageTexture::value: getpixel index error (x={x}, y={y})')
 
-        return Vec3(pixel[0]/255.999, pixel[1]/255.999, pixel[2]/255.999)
+        return Vec3(pixel.r/255.999, pixel.g/255.999, pixel.b/255.999)
 
 
 class NoiseTexture(Texture):
