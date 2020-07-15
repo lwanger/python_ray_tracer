@@ -89,7 +89,6 @@ class ValueNoise3D():
         px_s = fmt_list(self.perm_x_table[:5])
         py_s = fmt_list(self.perm_y_table[:5])
         pz_s = fmt_list(self.perm_z_table[:5])
-        # return f'r[:5]={fmt_list(self.r[:5])}, perm_x[:5]={fmt_list(self.perm_x_table[:5])}, perm_y[:5]={fmt_list(self.perm_y_table[:5])}, perm_z[:5]={fmt_list(self.perm_z_table[:5])}'
         return f'r[:5]={r_s}, perm_x[:5]={px_s}, perm_y[:5]={py_s}, perm_z[:5]={pz_s}'
 
 
@@ -141,24 +140,6 @@ def crinkly_noise(noise, px, py, scale=-0.1, frequency=0.02, frequencyMult=1.8, 
     return val
 
 
-def marble_pattern(noise, x, y, frequency, frequency_mult, amplitude_mult, layers=5):
-    px = x * frequency
-    py = y * frequency
-    amplitude = 1
-    val = 0
-
-    for l in range(layers):
-        val +=  noise.eval(px, py) * amplitude
-        px *= frequency_mult
-        py *= frequency_mult
-        amplitude *= amplitude_mult
-
-    # displace the value i used in the sin expression by noisevValue * 100
-    ret_val = (math.sin((x + val * 100) * TWO_PI / 200) + 1) / 2.0
-
-    return ret_val
-
-
 def marble_pattern2(noise, x, y, scale=0.01, frequency=0.02, frequencyMult=1.8, amplitudeMult=0.35,
                   numLayers=5, maxNoiseVal=0):
     #MARBLED: 	 .01 * stripes(x + 2*turbulence(x,y,z), 1.6);
@@ -167,24 +148,15 @@ def marble_pattern2(noise, x, y, scale=0.01, frequency=0.02, frequencyMult=1.8, 
     return val
 
 
-def wood_pattern(noise, x, y, frequency=0.01):
-    g = noise.eval(x*frequency, y*frequency) * 10
-    val = g - int(g)
-    return val
-
 ###
 # noise functions to pass in to NoiseTexture eval-func
 ###
-# def value_noise(noise, i, j, k, frequency=1.0, translate=0.0, scale=1.0):
 def value_noise(noise, i, j, k, frequency=1.0):
     val = noise.eval(i, j, k) * frequency
-    # val = (val + translate) * scale  # shift and scale to 0.0-1.0
-    # val = clamp(val, 0.0, 1.0)  # clamp to 0.0-1.0
     return val
-    # return noise.eval(i, j, k) * frequency
 
 
-def turbulent_noise(noise, i, j, k, frequency, frequency_mult, amplitude_mult, layers=5, sub_val=0.0, div_val=1.0):
+def turbulent_noise(noise, i, j, k, frequency, frequency_mult, amplitude_mult, layers=5, div_val=1.0):
     pi = i * frequency
     pj = j * frequency
     pk = k * frequency
@@ -192,19 +164,17 @@ def turbulent_noise(noise, i, j, k, frequency, frequency_mult, amplitude_mult, l
     val = 0
 
     for l in range(layers):
-        # val += abs((2 * noise.eval(pi, pj) - 1) * amplitude)
         val += abs((2 * noise.eval(pi, pj, pk) - 1) * amplitude)
         pi *= frequency_mult
         pj *= frequency_mult
+        pk *= frequency_mult
         amplitude *= amplitude_mult
 
-    # val = (val-sub_val) / div_val
     scaled_val = val / div_val
     return (0.5 * (1.0 + scaled_val))
-    # return val
 
 
-def fractal_noise(noise, i, j, k, frequency, frequency_mult, amplitude_mult, layers=5, sub_val=0.0, div_val=1.0):
+def fractal_noise(noise, i, j, k, frequency, frequency_mult, amplitude_mult, layers=5, div_val=1.0):
     pi = i * frequency
     pj = j * frequency
     pk = k * frequency
@@ -218,10 +188,33 @@ def fractal_noise(noise, i, j, k, frequency, frequency_mult, amplitude_mult, lay
         pk *= frequency_mult
         amplitude *= amplitude_mult
 
-    # val = (val-sub_val) / div_val
     scaled_val = val / div_val
     return (0.5 * (1.0 + scaled_val))
-    # return val
+
+
+def marble_pattern(noise, i, j, k, frequency, frequency_mult, amplitude_mult, layers=5, displace_x=100):
+    pi = i * frequency
+    pj = j * frequency
+    pk = k * frequency
+    amplitude = 1
+    val = 0
+
+    for l in range(layers):
+        val +=  noise.eval(pi, pj, pj) * amplitude
+        pi *= frequency_mult
+        pj *= frequency_mult
+        pk *= frequency_mult
+        amplitude *= amplitude_mult
+
+    # displace the value i used in the sin expression by noiseValue * 100
+    ret_val = (math.sin((i + val * displace_x) * TWO_PI / (2*displace_x)) + 1) / 2.0
+    return ret_val
+
+
+def wood_pattern(noise, i, j, k, frequency=0.01, frequency_mult=10):
+    g = noise.eval(i*frequency, j*frequency, k*frequency) * 10
+    val = g - int(g)
+    return val
 
 
 if __name__ == '__main__':
