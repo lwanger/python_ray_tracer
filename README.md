@@ -60,6 +60,8 @@ Lots of fun stuff to do on the ray tracing:
     - OpenSurfaces (http://opensurfaces.cs.cornell.edu/)
     - reaction/diffusion textures
     - texture repeat/tiling/mirroring
+    - noise texture designer - gui to design noise functions - eval_func, parms, 
+        colormap & range, import/export settings, translate and scale, ...
 
 Implemented Features:
     - Primitives: Sphere, Disc Triangle, Plane, STL Files (triangle meshes)
@@ -82,6 +84,12 @@ or Vec3. A huge amount of performance was tied up in isinstance calls (i.e. issi
 dunder methods were replaced to just work with Vec3's and mul_val and div_val added for scalars.
 
 TODO: Performance:
+    - algorithmic improvements 
+        - importance sampling. steradian based sampling on lights?
+        - sampling based on variance (https://link.springer.com/content/pdf/10.1007%2F978-1-4842-4427-2.pdf pg 215)
+        - hemisphere sampling (https://link.springer.com/content/pdf/10.1007%2F978-1-4842-4427-2.pdf pg 240)
+        - light importance sampling (https://link.springer.com/content/pdf/10.1007%2F978-1-4842-4427-2.pdf pg 269)
+        - de-noising ()
     - numba
     - nuitka? numba? C routine for hits? (ctypes?)
     - NVidia Optix (https://developer.nvidia.com/optix & https://github.com/ozen/pyoptix)
