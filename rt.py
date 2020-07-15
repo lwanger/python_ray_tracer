@@ -17,10 +17,12 @@ from material_classes import ray_color
 from create_scene_funcs import *
 
 
-CREATOR_FUNC = create_canonical_1
+#CREATOR_FUNC = create_canonical_1
+CREATOR_FUNC = create_perlin_1
 
 
 res_settings = {
+        'profile': { 'x_size': 50, 'chunk_size': 10, 'samples_per_pixel': 25, 'samples_per_light': 20, 'max_depth': 20 },
         'low': { 'x_size': 100, 'chunk_size': 10, 'samples_per_pixel': 10, 'samples_per_light': 10, 'max_depth': 10 },
         'med': { 'x_size': 200, 'chunk_size': 25, 'samples_per_pixel': 25, 'samples_per_light': 20, 'max_depth': 20 },
         'high': { 'x_size': 384, 'chunk_size': 25, 'samples_per_pixel': 50, 'samples_per_light': 50, 'max_depth': 25 },
