@@ -418,33 +418,17 @@ def create_canonical_2(settings=None):
 
     TEAPOT_thingiverse.stl -- bbox=AABB(vmin=(-15.000, -10.005, -9.088), vmax=(16.371, 10.005, 7.162)), num_triangles=87298
     """
-    use_teapot = "THINGIVERSE"
-    # use_teapot = "WIKICOMMONS"
-
-    if use_teapot == "THINGIVERSE":  # bbox=(-15.000, -9.088, -10.005), (16.371, 7.162, 10.005)),
-        spacing=0.5
-        stl_filename = Path("models/TEAPOT_thingiverse.stl")
-        rot_axis = [1, 0, 0]
-        rot_rads = math.pi / 2.0  # 45 deg
-        look_from = Vec3(0, 15, 60)
-        look_at = Vec3(0, -1.5, 0)
-        plane_y = -9.1
-        plane_x = 25
-        back_plane_z = -25
-        front_plane_z = 15
-        light1_pos = Vec3(11, 10, 3)
-    else:  #  wikicommons - bbox (-8.164, 0.000, -5.557), (9.412, 8.572, 5.370)
-        spacing=1
-        stl_filename = Path("models/Utah_teapot_commons.stl")
-        rot_axis = [1, 0, 0]
-        rot_rads = math.pi / 2.0  # 45 deg
-        look_from = Vec3(-3, 13, 30)
-        look_at = Vec3(0, 4, 0)
-        plane_y = -0.05
-        plane_x = 20
-        back_plane_z = -10
-        front_plane_z = 10
-        light1_pos = Vec3(-3, 14, 8)
+    spacing=0.5
+    stl_filename = Path("models/TEAPOT_thingiverse.stl")
+    rot_axis = [1, 0, 0]
+    rot_rads = math.pi / 2.0  # 45 deg
+    look_from = Vec3(0, 15, 60)
+    look_at = Vec3(0, -1.5, 0)
+    plane_y = -9.1
+    plane_x = 25
+    back_plane_z = -25
+    front_plane_z = 15
+    light1_pos = Vec3(11, 10, 3)
 
     silver = SolidColor(Vec3(0.7, 0.7, 0.7))
     light_gray = SolidColor(Vec3(0.85, 0.85, 0.85))
@@ -498,8 +482,6 @@ def create_canonical_2(settings=None):
     lights = [light_1]
     scene = Scene(world, ambient=ambient, lights=lights, background=background)
     camera = Camera(look_from=look_from, look_at=look_at, vup=Vec3(0, 1, 0), vert_fov=25)
-
-    #TEAPOT_thingiverse.stl - vmin=(-15.000, -10.005, -9.088), vmax=(16.371, 10.005, 7.162), num_triangles=87298
 
     return {'scene': scene, 'camera': camera}
 
@@ -557,16 +539,10 @@ def create_perlin_1(settings=None):
                     'plane_x': 24, 'plane_y': -8.0, 'back_plane_z': -25, 'front_plane_z': 20,
                     'rot_axis': [1, 0, 0], 'rot_rads': math.pi / 2, 'translate': [0, 0, -12.5], 'show_walls': True}
     else:
-        # Stanford dragon - bbox=(vmin=(-10.832, -4.205, 5.278), vmax=(9.657, 4.973, 19.742)), num_triangles=304941
-        # rotated by 90 deg on the X axis... bbox=AABB(vmin=(-48.551, 5.275, -45.792), vmax=(59.196, 113.167, 42.010)), num_triangles=112402
         stl_filename = "models/dragon_65.stl"
-        # settings = {'look_from': Vec3(0.0, 10, 35), 'look_at': Vec3(0, 0.25, 0),
         settings = {'look_from': Vec3(0.0, 10, 40), 'look_at': Vec3(0, 0.25, 0),
-        # 'plane_x': 24, 'plane_y': -4.205, 'back_plane_z': -25, 'front_plane_z': 20,
         'plane_x': 24, 'plane_y': -7.221, 'back_plane_z': -25, 'front_plane_z': 20,
-        # 'rot_axis': [1,0,0], 'rot_rads': math.pi/2, 'translate': [-25, 0, 0], 'show_walls': True}
         'rot_axis': [1,0,0], 'rot_rads': math.pi/2, 'translate': [0, 0, -12.5], 'show_walls': True}
-        # 'rot_axis': [0,1,0], 'rot_rads': math.pi, 'translate': [0, 0, -12.5], 'show_walls': False }
 
         # if False:
         if True:
@@ -649,46 +625,15 @@ def create_stl_mesh(settings=None):
     dark_gray = SolidColor(Vec3(0.1, 0.1, 0.1))
     black = SolidColor(Vec3(0.0, 0.0, 0.0))
 
-    # stl_filename = "models/sauce_ramp_v2.stl"  # vmin=(-1.60, -0.69, 0.0), vmax=(0.97, 0.69, 1.19)
-    # settings = {'look_from': Vec3(0.0, 2, 5), 'look_at': Vec3(0, 0.0, 0),
-    #     'plane_x': 5, 'plane_y': -2, 'back_plane_z': -3, 'front_plane_z': 3,
-    #     'rot_axis': [0.0, 0.5, 0.0], 'rot_rads': math.radians(90), 'show_walls': False}
-
-    # stl_filename ="models/LRW pick (plate stiffener).stl" # vmin=(-365.174, -471.391, 12.700), vmax=(365.313, 341.873, 50.800)
-    # setting not right yet!
-    # settings = {'look_from': Vec3(0.0, 2, 300), 'look_at': Vec3(0, 0.0, 0),
-    #             'plane_x': 400, 'plane_y': -500, 'back_plane_z': 0, 'front_plane_z': 60,
-    #             'rot_axis': None, 'rot_rads': None, 'show_walls': False}
-
-    # stl_filename ="models/gyroid_20mm.stl"
-    # settings = {'look_from': Vec3(-10.0, 25, 60), 'look_at': Vec3(0, 0.0, 0),
-    #             'plane_x': 25, 'plane_y': -15, 'back_plane_z': -30, 'front_plane_z': 15,
-    #             'rot_axis': None, 'rot_rads': None, 'show_walls': True}
-
-    # stl_filename ="models/IO_Sample_Hexagon.stl"
-    # settings = {'look_from': Vec3(-10.0, 90, 100), 'look_at': Vec3(0, 27.0, -4),
-    #             'plane_x': 50, 'plane_y': -10, 'back_plane_z': -35, 'front_plane_z': 15,
-    #             'rot_axis': None, 'rot_rads': None, 'translate': [-23, -5, -10], 'show_walls': True}
-
-    # Stanford bunny - BBOX=vmin = (-23.551, -42.010, 5.275), vmax = (84.196, 45.792, 113.167)), num_triangles = 112402
     # rotated by 90 deg on the X axis... bbox=AABB(vmin=(-48.551, 5.275, -45.792), vmax=(59.196, 113.167, 42.010)), num_triangles=112402
     stl_filename = "models/Bunny.stl"
     settings = {'look_from': Vec3(0.0, 100, 350), 'look_at': Vec3(0, 50.0, 0),
     'plane_x': 120, 'plane_y': 5.275, 'back_plane_z': -85, 'front_plane_z': 350,
     'rot_axis': [1,0,0], 'rot_rads': math.pi/2, 'translate': [-25, 0, 0], 'show_walls': True}
 
-    # stl_filename ="models/sn_logo.stl"
-    # stl_filename ="models/modern_hexagon_revised.stl"
-
-
-    # stl_filename ="models/bar_6mm.stl"
-    # settings = {'look_from': Vec3(50, 25, 50), 'look_at': Vec3(0, 0.5, 0),
-    #             'plane_x': 20, 'plane_y': -5, 'back_plane_z': -50, 'front_plane_z': 50, }
-
     image_2 = Image.open(Path("./textures/IO_logo.png"))
     logo = ImageTexture(image_2)  # images are across the entire checkerboard, not a single square?
 
-    # checked = CheckerBoard(dark_gray, light_gray, spacing=0.5)
     checked = CheckerBoard(dark_gray, light_gray, spacing=0.1)
 
     diffuse_red = Lambertian(red, name="red'")
