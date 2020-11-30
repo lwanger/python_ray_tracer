@@ -2,7 +2,7 @@
 
 This is an implementation of a Python ray tracer base on Pete Shirley's [Ray Tracing in One Weekend](https://raytracing.github.io/) books.
 
-![Shirley cover picture](final_image - high res.png)
+![Shirley cover picture](cover_image.png)
 
 Implemented Features:
     - Primitives: Sphere, Disc Triangle, Plane, STL Files (triangle meshes)
@@ -40,14 +40,14 @@ in a .env file for convenience:
 
 ## Examples:
 
-![Jade Dragon](images/jade dragon (high).png)
-![Soft Shadows](images/green dragon (high).png)
-![Noise Textures](images/noise_1.png.png)
+![Jade Dragon](images/jade_dragon.png)
+![Soft Shadows](images/green_dragon.png)
+![Noise Textures](images/noise_1.png)
 ![Perceptually Linear Color Maps](images/fire_texture.png)
-![Canonical Examples](images/canonical 1 soft shadow.png)
+![Canonical Examples](images/soft_shadow.png)
 ![Reading STL files](images/gyroid.png)
-![Triangles and FOV](images/sphere and triangles.png)
-![Transparency](images/sphere and polygons and transparency.png)
+![Triangles and FOV](images/sphere_and_triangles.png)
+![Transparency](images/transparency.png)
 
 
 ## Performance
