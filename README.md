@@ -40,6 +40,7 @@ in a .env file for convenience:
 
 ## Examples:
 
+![GUI](images/gui.png)
 ![Jade Dragon](images/jade_dragon.png)
 ![Soft Shadows](images/green_dragon.png)
 ![Noise Textures](images/noise_1.png)

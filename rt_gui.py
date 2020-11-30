@@ -56,12 +56,12 @@ from create_scene_funcs import *
 # CREATOR_FUNC = create_checkerboard_world
 # CREATOR_FUNC = create_checkerboard_world_2
 # CREATOR_FUNC = create_image_texture_world
-# CREATOR_FUNC = create_canonical_1  # ball over plane
+CREATOR_FUNC = create_canonical_1  # ball over plane
 # CREATOR_FUNC = create_canonical_2  # teapot
 # CREATOR_FUNC = create_stl_mesh
 # CREATOR_FUNC = create_quad_world
 # CREATOR_FUNC = create_disc_test_world
-CREATOR_FUNC = create_perlin_1
+# CREATOR_FUNC = create_perlin_1
 
 
 # messages from GUI
@@ -182,11 +182,7 @@ class App(tk.Frame):
 
 
     def create_frame_buffer(self):
-        # print(f'create_frame_buffer called')
         self.fb = FrameBuffer(self.x_size, self.y_size, np.int8, 'rgb')
-        # self.pil_image = Image.new(mode="RGB", size=(X_SIZE, Y_SIZE), color=(128,128,128))
-        # self.image = ImageTk.PhotoImage(self.pil_image)
-        # self.canvas.create_image(X_SIZE, Y_SIZE, image=self.image)
 
 
     def run_gui(self):
@@ -199,7 +195,6 @@ class App(tk.Frame):
         #     self.worker.join(60)
 
         if self.fb is not None and self.image_saved is False:
-            # print(f'Prompt to save image...')
             self.save_image()
 
         self.root.destroy()
@@ -207,7 +202,6 @@ class App(tk.Frame):
 
     def save_image(self):
         img = self.fb.make_image()
-        # show_image(img)
         save_image(img, self.image_filename)
         self.image_saved = True
 
@@ -229,8 +223,6 @@ class App(tk.Frame):
 
     def process_worker_msgs(self):
         # Check every 100 ms if thread is done and process any messages in the queue.
-        # print(f'process_worker_msgs called...')
-
         while True:
             break
             response = self.receive_worker_message()
@@ -291,7 +283,6 @@ class App(tk.Frame):
 
 
     def finish_render(self, elapsed_time):
-        # print(f'finish_render called...')
         ts = elapsed_time.total_seconds()
 
         if ts < 60:
@@ -312,13 +303,8 @@ class App(tk.Frame):
         self.start_button_start = True
         self.quit_button['state'] = "normal"
 
-        # self.pil_image = Image.new(mode="RGB", size=(X_SIZE, Y_SIZE), color=(128,128,128))
-        # image = ImageTk.PhotoImage(im)
-        # self.canvas.create_image(self.x_size, self.y_size, image=image)
-
 
     def cancel_render(self):
-        # print(f'cancel_render called...')
         self.status_str.set(f'render cancelled')
         self.render_cancelled = True
         self.status_str2.set('')
@@ -328,41 +314,22 @@ class App(tk.Frame):
 
 
     def start_cmd(self):
-        # print(f'start_cmd called...')
         self.render_cancelled = False
         if self.start_button_start is True:  # start
             self.start_render()
         else:  # cancel
             self.cancel_render()
 
-        # self.update_canvas(0, 0, None, None)
-
-        # self.root.update_idletasks()  # required to get the label to update
-
-        # args = (start, end, self.worker_pipe_conn)
-        # self.worker = Process(target=calc_range_of_primes, args=args)
-        # self.worker.start()
-        # self.process_worker_msgs()
-        # self.update_worker_progress()
-
-    # def rgb_to_canvas_color(self, color):
-    #     return f'{color[0]:02x}{color[1]:02x}{color[2]:02x}'
 
     def update_canvas(self, l: int, b: int, chunk_num: int, total_chunks: int):
-        # print(f'update_canvas -- l={l}, b={b}, cn={chunk_num}, tc={total_chunks}')
         shape = self.fb.fb.shape
-        # im = Image.frombytes("RGB", (shape[1],shape[0]), self.fb.fb.astype('b').tostring())
         self.im = Image.frombytes("RGB", (shape[1],shape[0]), self.fb.fb.astype('b').tostring())
-        # photo = ImageTk.PhotoImage(image=im)
         self.photo = ImageTk.PhotoImage(image=self.im)
-        # self.canvas.create_image(0,0,image=photo,anchor=tk.NW)
         self.canvas.create_image(0,0,image=self.photo,anchor=tk.NW)
-        # self.status_str2.set(f'rendered scanline {y}')
         if chunk_num is not None:
             self.status_str2.set(f'rendered chunk {chunk_num} / {total_chunks}')
 
         self.canvas.update()
-        # self.root.update()
         self.root.update_idletasks()
 
 
