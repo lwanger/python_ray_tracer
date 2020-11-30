@@ -42,6 +42,62 @@ def clamp(x: float, min: float, max: float) -> float:
         return x
 
 
+def squared_length(v: "Vec3"):
+    x,y,z = v.x, v.y, v.z
+    return x*x + y*y + z*z
+
+
+def cross(a: "Vec3", b: "Vec3"):
+    return Vec3(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x)
+
+
+def dot(a: "Vec3", b: "Vec3"):
+    return a.x*b.x + a.y*b.y + a.z*b.z
+
+def random_vec3(min: float, max: float) -> "Vec3":
+    x = uniform(min, max)
+    y = uniform(min, max)
+    z = uniform(min, max)
+    return Vec3(x, y, z)
+
+
+def random_unit_vec3() -> "Vec3":
+    a = uniform(0, 2*math.pi)
+    z = uniform(-1, 1)
+    r = math.sqrt(1 - z**2)
+    return Vec3(r*math.cos(a), r*math.sin(a), z)
+
+def random_in_unit_sphere() -> "Vec3":
+    # pick a point in a unit sphere
+    while True:
+        p = random_vec3(-1, 1)
+        if p.squared_length() < 1:
+            break
+    return p
+
+
+def random_on_unit_sphere() -> "Vec3":
+    # pick a point on the surface of a unit sphere
+    return Vec3(uniform(-1,1), uniform(-1,1), uniform(-1,1)).normalize()
+
+
+def random_in_hemisphere(normal: "Vec3") -> "Vec3":
+    # pick a point in the hemisphere
+    in_unit_sphere = random_in_unit_sphere()
+    if dot(in_unit_sphere, normal) > 0.0:
+        return in_unit_sphere
+    else:
+        return -in_unit_sphere
+
+def random_in_unit_disc() -> "Vec3":
+    # pick a point in a unit disc
+    while True:
+        p = Vec3(uniform(-1, 1), uniform(-1, 1), 0)
+        if p.squared_length() < 1:
+            break
+    return p
+
+
 def surrounding_box(box1: "AABB", box2: "AABB") -> "AABB":
     # return the bounding box surrounding two bounding boxes (i.e. the union)
     if box1 is None:
@@ -349,3 +405,158 @@ def box_z_compare(a, time0=0, time1=0):
     return box.vmin.z
 
 
+class BVHNode(Geometry):
+    def __init__(self, geometry_list: GeometryList, time0: float=0, time1: float=0):
+        """
+        :param geometry_list: list of Geometry objects to add the the BVH
+        :param time0: the start time (for moving scenes and motion blur)
+        :param time1: the end time  (for moving scenes and motion blur)
+
+        each node has three elements:
+            - left geometry or BVHNode for the left half of the tree
+            - right geometry or BVHNode for the right half of the tree
+            - bbox - the bounding box (AABB) for this node
+
+        Builds the BVH (bounding volume hierarchy).BVHNode is a node in a binary tree.
+        Each left/right pair (node) splits the scene by a random axis at
+        each level of the hierarchy:
+
+            1) randomly choose an axis
+            2) sort the primitives (using std::sort)
+            3) put half in each subtree)
+
+        When the list has only one or two elements, put one in each subtree and end the recursion.
+
+        Finally set a bbox for the node
+
+        note: If there are any primitives with no bbox (i.e. has_bbox==False), then
+        put them all in a left node with math.-inf and math.inf for the bbox. If all are no bbox
+        then split between left and right. This will force a hit on them.
+
+            def has_bbox(self) -> bool:
+        """
+
+        if len(geometry_list) == 0:
+            raise RuntimeError("BVHNode.__init__: Empty geometry list")
+
+        no_bbox_list = geometry_list.no_has_bbox_list()
+        has_bbox_list = geometry_list.has_bbox_list()
+
+        if len(no_bbox_list) != 0:
+            vmin = Vec3(-math.inf, -math.inf, -math.inf)
+            vmax = Vec3(math.inf, math.inf, math.inf)
+            self.bbox = AABB(vmin, vmax)
+
+            if len(has_bbox_list) == 0:
+                if len(no_bbox_list) == 1:
+                    self.left = no_bbox_list[0]
+                    self.right = None
+                elif len(no_bbox_list) == 2:
+                    self.left = no_bbox_list[0]
+                    self.right = no_bbox_list[1]
+                else:
+                    mid = len(no_bbox_list) // 2
+                    geom_list = GeometryList(no_bbox_list[:mid])
+                    self.left = BVHNode(geom_list, time0, time1)
+                    geom_list = GeometryList(no_bbox_list[mid:])
+                    self.right = BVHNode(geom_list, time0, time1)
+            else:  # len(has_bbox_list) != 0
+                if len(no_bbox_list) == 1:
+                    self.left = no_bbox_list[0]
+                else:
+                    geom_list = GeometryList(no_bbox_list)
+                    self.left = BVHNode(geom_list, time0, time1)
+
+                if len(has_bbox_list) == 1:
+                    self.right = has_bbox_list[0]
+                else:
+                    geom_list = GeometryList(has_bbox_list)
+                    self.right = BVHNode(geom_list, time0, time1)
+        else:  # len(no_bbox_list) == 0
+            if len(has_bbox_list) > 1:
+                axis = randint(0,2)
+                comparators = {0: box_x_compare, 1: box_y_compare, 2: box_z_compare}
+                comparator = comparators[axis]
+
+            if len(has_bbox_list) == 1:
+                self.left = has_bbox_list[0]
+                self.right = None
+            elif len(has_bbox_list) == 2:
+                obj0 = has_bbox_list[0]
+                obj1 = has_bbox_list[1]
+
+                if comparator(obj0) < comparator(obj1):
+                    self.left = obj0
+                    self.right = obj1
+                else:
+                    self.left = obj1
+                    self.right = obj0
+            else:
+                has_bbox_list.sort(key=comparator)
+                mid = len(has_bbox_list) // 2
+                geom_list_left = GeometryList(has_bbox_list[:mid])
+                self.left = BVHNode(geom_list_left, time0, time1)
+                geom_list_right = GeometryList(has_bbox_list[mid:])
+                self.right = BVHNode(geom_list_right, time0, time1)
+
+            right_bbox = None
+            left_bbox = self.left.bounding_box(time0, time1)
+            if self.right is not None:
+                right_bbox = self.right.bounding_box(time0, time1)
+
+            self.bbox = surrounding_box(left_bbox, right_bbox)
+
+    def __repr__(self):
+        return(f'BVHNode(left={type(self.left)}, right={type(self.right)}, bbox={self.bbox})')
+
+    def has_bbox(self) -> bool:
+        return True
+
+    def bounding_box(self, t0: float, t1: float) -> AABB:
+        return self.bbox
+
+    def point_on(self):
+        # pick a random primitive in the BVH and return point_on for it.
+        def pick_node(node: BVHNode):
+            if node.right is None:
+                return self.left
+            dir = choice([0,1])
+            if dir==0:  # left
+                pick = node.left
+            else:
+                pick = node.right
+
+            if isinstance(pick, BVHNode):
+                r = pick_node(pick)
+            else:
+                return pick
+
+            return r
+
+        prim = pick_node(self)
+        p = prim.point_on()
+        return p
+
+    def hit(self, ray: Ray,t_min: float=0.0, t_max: float=math.inf) -> HitRecord:
+        hr = self.bbox.hit(ray, t_min, t_max)
+
+        if hr is False:
+            return None
+
+        hit_left = self.left.hit(ray, t_min, t_max)
+
+        if self.right is None:
+            return hit_left
+
+        hit_right = self.right.hit(ray, t_min, t_max)
+
+        # return [lst for lst in (hit_left, hit_right) if lst is not None]
+        if hit_left is None:
+            return hit_right
+        elif hit_right is None:
+            return hit_left
+        else: # return lowest t_min
+            if hit_left.t < hit_right.t:
+                return hit_left
+            else:
+                return hit_right
