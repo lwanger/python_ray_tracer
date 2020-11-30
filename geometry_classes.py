@@ -142,7 +142,7 @@ def get_color(val, colormap):
 
 class Vec3():
     def __init__(self, x,y,z):
-        self.x = x
+        self.x = xcl
         self.y = y
         self.z = z
 

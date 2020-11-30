@@ -9,19 +9,22 @@ This is an implementation of a Python ray tracer base on Pete Shirley's [Ray Tra
     - Primitives: Sphere, Disc Triangle, Plane, STL Files (triangle meshes)
     - Texture mapping: SolidColor, CheckerBoard, ImageTexture
     - Noise textures using [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) for solid textures.
+    - Colormaps for noise textures. colorcet package included in requirements to provide perceptually linear
+        colormaps.
     - Lighting: Point lights, Area lights (can use any Geometry with a point_on method -- triangle, disc, 
         sphere, etc.) 
     - Shadow rays for shadowing. Area lights drive their own shadow ray sampling for soft shadows.
     - BVH (bounding volume hieraerchy)
+    - Multi-threaded GUI to provide image preview and ability to cancel an in-progress rendering.
     - models: teapots, bunnies, etc.
 
 ## Install
 
 1. Install Python 3.6+
-2. For the gui version, make sure tkinter is available (type: *python -c "import tkinter"* to test). If this fails
+2. For the gui version, make sure tkinter is available (type: **python -c "import tkinter"** to test). If this fails
 you'll need to install tkinter for your platform
 3. Download/clone this git repository
-4. install the required packages: *pip install -r requirements.txt*
+4. install the required packages: **pip install -r requirements.txt**
 
 note 1: I have not tested the install on other systems. Let me know if there's an issue.
 
@@ -33,10 +36,10 @@ The easiest with to run the program is to use the GUI:
 
 ![GUI](images/gui.png)
 
-    type: *python rt_gui.py*
+    type: **python rt_gui.py**
     
-Then Click on the *start* button to start the rendering. The image will be saved in the current working directory
-as *rt.png* (unless changed by the IMAGE_FILENAME environment variable.)
+Then Click on the **start** button to start the rendering. The image will be saved in the current working directory
+as **rt.png** (unless changed by the IMAGE_FILENAME environment variable.)
     
 note: There are a lot of features that could be added to the GUI. Top of the list is to set the scene file from a
 command line option or menu item. For now it is hard-coded in the code. To change the scene, set the 
@@ -44,7 +47,7 @@ CREATOR_FUNC variable:
 
     CREATOR_FUNC = create_canonical_1
     
-There are several sample scene files in *create_scene_funcs.py*.    
+There are several sample scene files in **create_scene_funcs.py**.    
 
 The program can be run from the command line with:
 

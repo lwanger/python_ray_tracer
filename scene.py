@@ -19,16 +19,11 @@ class Scene():
         """
         Class the represent a scene. Includes the geometry and lighting.
 
+        :param geometry: a list of primitives (Geometry) objects for the scene
+        :param lights: a list of lights (LightBase) objects for the scene
         ambient: ambient lighting
         background: background texture
-        TODO:
-            add lighting
-            add start and end time
-            add rendering?
-            add camera?
         """
-        # self.geometry = geometry  # not needed if you have bvh...
-        # self.ambient = ambient_light  # Vec3
         self.bvh = BVHNode(geometry)
 
         if lights is None:
