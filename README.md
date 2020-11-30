@@ -2,7 +2,7 @@
 
 This is an implementation of a Python ray tracer base on Pete Shirley's [Ray Tracing in One Weekend](https://raytracing.github.io/) books.
 
-![Shirley cover picture](cover_image.png)
+![Shirley cover picture](images/cover_image.png)
 
 Implemented Features:
     - Primitives: Sphere, Disc Triangle, Plane, STL Files (triangle meshes)
@@ -15,6 +15,8 @@ Implemented Features:
     - models: teapots, bunnies, etc.
 
 The easiest with to run the program is to use the GUI:
+
+![GUI](images/gui.png)
 
     python rt_gui.py
 
@@ -40,7 +42,6 @@ in a .env file for convenience:
 
 ## Examples:
 
-![GUI](images/gui.png)
 ![Jade Dragon](images/jade_dragon.png)
 ![Soft Shadows](images/green_dragon.png)
 ![Noise Textures](images/noise_1.png)
