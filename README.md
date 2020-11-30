@@ -2,6 +2,8 @@
 
 This is an implementation of a Python ray tracer base on Pete Shirley's [Ray Tracing in One Weekend](https://raytracing.github.io/) books.
 
+![Shirley cover picture](final_image - high res.png)
+
 Implemented Features:
     - Primitives: Sphere, Disc Triangle, Plane, STL Files (triangle meshes)
     - Texture mapping: SolidColor, CheckerBoard, ImageTexture
@@ -35,6 +37,18 @@ in a .env file for convenience:
     - CHUNK_SIZE: size of chunks to calculate (e.g. value of 10 is 10x10 pixel blocks)
     - RANDOM_CHUNKS: whether rendered chunks are in order or random (True - default)
     - IMAGE_FILENAME: the file name to use to save the image
+
+## Examples:
+
+![Jade Dragon](jade dragon (high).png)
+![Soft Shadows](green dragon (high).png)
+![Noise Textures](noise_1.png.png)
+![Perceptually Linear Color Maps](fire_texture.png)
+![Canonical Examples](canonical 1 soft shadow.png)
+![Reading STL files](gyroid.png)
+![Triangles and FOV](sphere and triangles.png)
+![Transparency](sphere and polygons and transparency.png)
+
 
 ## Performance
 
