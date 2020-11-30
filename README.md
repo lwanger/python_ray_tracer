@@ -40,14 +40,14 @@ in a .env file for convenience:
 
 ## Examples:
 
-![Jade Dragon](jade dragon (high).png)
-![Soft Shadows](green dragon (high).png)
-![Noise Textures](noise_1.png.png)
-![Perceptually Linear Color Maps](fire_texture.png)
-![Canonical Examples](canonical 1 soft shadow.png)
-![Reading STL files](gyroid.png)
-![Triangles and FOV](sphere and triangles.png)
-![Transparency](sphere and polygons and transparency.png)
+![Jade Dragon](images/jade dragon (high).png)
+![Soft Shadows](images/green dragon (high).png)
+![Noise Textures](images/noise_1.png.png)
+![Perceptually Linear Color Maps](images/fire_texture.png)
+![Canonical Examples](images/canonical 1 soft shadow.png)
+![Reading STL files](images/gyroid.png)
+![Triangles and FOV](images/sphere and triangles.png)
+![Transparency](images/sphere and polygons and transparency.png)
 
 
 ## Performance
