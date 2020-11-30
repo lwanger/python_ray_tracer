@@ -47,7 +47,6 @@ in a .env file for convenience:
 ![Canonical Examples](images/soft_shadow.png)
 ![Reading STL files](images/gyroid.png)
 ![Triangles and FOV](images/sphere_and_triangles.png)
-![Transparency](images/transparency.png)
 
 
 ## Performance
