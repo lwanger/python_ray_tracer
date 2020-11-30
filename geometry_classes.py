@@ -141,6 +141,89 @@ def get_color(val, colormap):
 
 
 class Vec3():
+    def __init__(self, x,y,z):
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def __repr__(self):
+        return f'Vec3({self.x:0.3f}, {self.y:0.3f}, {self.z:0.3f})'
+
+    def __str__(self):
+        return f'({self.x:0.3f}, {self.y:0.3f}, {self.z:0.3f})'
+
+    def __neg__(self):
+        return Vec3(-self.x, -self.y, -self.z)
+
+    def __add__(self, other):
+        # if isinstance(other, numbers.Number):
+        #     return Vec3(self.x+other, self.y+other, self.z+other)
+        return Vec3(self.x+other.x, self.y+other.y, self.z+other.z)
+
+    def add_val(self, value):
+        return Vec3(self.x+value, self.y+value, self.z+value)
+
+    def __sub__(self, other):
+        # if isinstance(other, numbers.Number):
+        #     return Vec3(self.x-other, self.y-other, self.z-other)
+        return Vec3(self.x-other.x, self.y-other.y, self.z-other.z)
+
+    def sub_val(self, value):
+        return Vec3(self.x-value, self.y-value, self.z-value)
+
+    def __mul__(self, other):
+        # if isinstance(other, numbers.Number):
+        #     return Vec3(self.x*other, self.y*other, self.z*other)
+        return Vec3(self.x*other.x, self.y*other.y, self.z*other.z)
+
+    def mul_val(self, value):
+        return Vec3(self.x*value, self.y*value, self.z*value)
+
+    def __truediv__(self, other):
+        # if isinstance(other, numbers.Number):
+        #     return Vec3(self.x/other, self.y/other, self.z/other)
+        return Vec3(self.x/other.x, self.y/other.y, self.z/other.z)
+
+    def div_val(self, value):
+        return Vec3(self.x/value, self.y/value, self.z/value)
+
+    def get_x(self):
+        return self.x
+
+    def set_x(self, v):
+        self[0] = v
+
+    r = property(get_x, set_x)
+
+    def get_y(self):
+        return self.y
+
+    def set_y(self, v):
+        self[1] = v
+
+    g = property(get_y, set_y)
+
+    def get_z(self):
+        return self.z
+
+    def set_z(self, v):
+        self[2] = v
+
+    b = property(get_z, set_z)
+
+    def length(self):
+        return math.sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+
+    def squared_length(self):
+        return self.x*self.x + self.y*self.y + self.z*self.z
+
+    def normalize(self):
+        k = 1.0 / math.sqrt(self.x*self.x + self.y*self.y + self.z*self.z)
+        return Vec3(self.x*k, self.y*k, self.z*k)
+
+    def unit_vector(self):
+        return self.normalize()
+
     def get_unscaled_color(self):
         return self.x, self.y, self.z
 

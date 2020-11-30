@@ -14,12 +14,72 @@ ORIGIN_UL = 1
 
 
 class FrameBuffer():
+    def __init__(self, x_size: int, y_size: int, dtype=np.int8, depth='s', origin="ll"):
+        """
+        Create a numpy array to act as a framebuffer.
+
+        :param x_size:
+        :param y_size:
+        :param dtype: the data type for each pixel. Defaults to np.int8
+        :param depth: the frame buffer depth - s - one value, rgb - 3 values per pixel, rgba - 4 vals per pixel
+        :param origin: either "ll" (lower left - default) or "ul" upper left
+
+        :return: numpy.Array
+        """
+        if origin == "ll":
+            self.origin = ORIGIN_LL
+        else:
+            self.origin = ORIGIN_UL
+
+        if depth == 's':
+            self.fb = np.zeros(shape=(y_size, x_size), dtype=dtype)
+            self.depth_num = 1
+        elif depth == 'rgb':
+            self.fb = np.zeros(shape=(y_size, x_size, 3), dtype=dtype)
+            self.depth_num = 3
+        elif depth == 'rgba':
+            self.fb = np.zeros(shape=(y_size, x_size, 4), dtype=dtype)
+            self.depth_num = 4
+        else:
+            raise RuntimeError(f'Invalid FrameBuffer depth ({depth})')
+
+        self.x_size = x_size
+        self.y_size = y_size
+        self.dtype = dtype
+        self.depth = depth
+
+
+    def get_x_size(self):
+        return self.x_size
+
+    def get_y_size(self):
+        return self.y_size
+
+    def get_depth(self):
+        return self.y_size
+
+    def get_shape(self):
+        return self.fb.shape
+
+    def make_image(self, mode="L") -> Image:
+        """
+        Create a PIL (pillow) image from a numpy array/framebuffer.
+
+        :param mode: PIL mode - "L" for luminance/grayscale, "RGB", "RGBA", "1" binary, "P" 8 bit palette
+        :return: PIL.Image
+        """
+        if self.depth_num == 1:
+            return Image.fromarray(self.fb, mode="L")
+        elif self.depth_num == 3:
+            return Image.fromarray(self.fb, mode="RGB")
+        else:  # depth_num == 4
+            return Image.fromarray(self.fb, mode="RGBA")
+
     def set_pixel(self, x, y, value, samples=1):
         if samples == 1:
             scaled_value = value
         else:
             scale = 1 / samples
-            # scaled_value = [sqrt(value.x*scale), sqrt(value.y*scale), sqrt(value.z*scale)]  # sqrt to gamma correct
             scaled_value = [sqrt(v*scale) for v in value]  # sqrt to gamma correct
 
         if self.origin == ORIGIN_LL:
