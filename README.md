@@ -23,7 +23,8 @@ you'll need to install tkinter for your platform
 3. Download/clone this git repository
 4. install the required packages: *pip install -r requirements.txt*
 
-note 1: I have not tested the install on other systems. Let me know if there's an issue:
+note 1: I have not tested the install on other systems. Let me know if there's an issue.
+
 note 2: It is better form to put it in it's own virtual environment. See various web tutorials on how to do that.
 
 ## Running the code
@@ -32,7 +33,18 @@ The easiest with to run the program is to use the GUI:
 
 ![GUI](images/gui.png)
 
-    python rt_gui.py
+    type: *python rt_gui.py*
+    
+Then Click on the *start* button to start the rendering. The image will be saved in the current working directory
+as *rt.png* (unless changed by the IMAGE_FILENAME environment variable.)
+    
+note: There are a lot of features that could be added to the GUI. Top of the list is to set the scene file from a
+command line option or menu item. For now it is hard-coded in the code. To change the scene, set the 
+CREATOR_FUNC variable:
+
+    CREATOR_FUNC = create_canonical_1
+    
+There are several sample scene files in *create_scene_funcs.py*.    
 
 The program can be run from the command line with:
 
