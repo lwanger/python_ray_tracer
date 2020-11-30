@@ -1,5 +1,4 @@
-
-#Python Ray Tracer
+# Python Ray Tracer
 
 This is an implementation of a Python ray tracer base on Pete Shirley's [Ray Tracing in One Weekend](https://raytracing.github.io/) books.
 
@@ -37,7 +36,7 @@ in a .env file for convenience:
     - RANDOM_CHUNKS: whether rendered chunks are in order or random (True - default)
     - IMAGE_FILENAME: the file name to use to save the image
 
-##Performance
+## Performance
 
 Python is a really bad language to implement a ray tracer in, as it's performance is really bad for tight loops
 performing lots of math computation. That being said a number of things have been done to improve performance:
@@ -93,7 +92,7 @@ Lots of fun stuff left to do on the ray tracing:
     - implement key data structures and functions in a higher performance language (i.e. C or Rust) and call from the
         Python.
 
-##Framebuffer class:
+## Framebuffer class:
 
 One useful class in here is the framebuffer class. This is a generalized frame buffer. The FrameBuffer class has some 
 simple methods:
@@ -104,5 +103,7 @@ simple methods:
 - set_pixel(x, y, val) -- set the pixel at location x, y to the value (val)
 - get_pixel(x,y) -- return the value of the pixel
 - make_image(mode) -- creates an image using PIL. For list of modes see pillow documentation. Defaults to "L" - 0..256 luminosity value. There are two functions (show_image and save_image) that can take the return value and show it on screen or save it to disk.
+
+--
 
 Len Wanger -- 2020
