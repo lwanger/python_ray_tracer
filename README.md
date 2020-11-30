@@ -4,7 +4,8 @@ This is an implementation of a Python ray tracer base on Pete Shirley's [Ray Tra
 
 ![Shirley cover picture](images/cover_image.png)
 
-Implemented Features:
+## Implemented Features
+
     - Primitives: Sphere, Disc Triangle, Plane, STL Files (triangle meshes)
     - Texture mapping: SolidColor, CheckerBoard, ImageTexture
     - Noise textures using [Perlin noise](https://en.wikipedia.org/wiki/Perlin_noise) for solid textures.
@@ -13,6 +14,19 @@ Implemented Features:
     - Shadow rays for shadowing. Area lights drive their own shadow ray sampling for soft shadows.
     - BVH (bounding volume hieraerchy)
     - models: teapots, bunnies, etc.
+
+## Install
+
+1. Install Python 3.6+
+2. For the gui version, make sure tkinter is available (type: *python -c "import tkinter"* to test). If this fails
+you'll need to install tkinter for your platform
+3. Download/clone this git repository
+4. install the required packages: *pip install -r requirements.txt*
+
+note 1: I have not tested the install on other systems. Let me know if there's an issue:
+note 2: It is better form to put it in it's own virtual environment. See various web tutorials on how to do that.
+
+## Running the code
 
 The easiest with to run the program is to use the GUI:
 
