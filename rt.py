@@ -4,6 +4,13 @@ Ray tracer code -- command line version and basic routines
 Len Wanger, copyright 2020
 """
 
+##try:
+#    import pyjion
+#    pyjion.enable()
+#    print("Pyjion enabled")
+#except ModuleNotFoundError:
+#    pass
+
 from datetime import datetime
 import os
 # from random import random

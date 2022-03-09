@@ -843,3 +843,134 @@ def create_disc_test_world(settings=None):
     scene = Scene(world, ambient=ambient, lights=lights, background=background)
     camera = Camera(look_from=Vec3(-0.5, 3, 10), look_at=Vec3(0, 1.0, 0), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.0, focus_dist=20)
     return {'scene': scene, 'camera': camera}
+
+
+def create_ves_1(settings=None):
+    color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
+    color_2 = SolidColor(Vec3(0.8, 0.8, 0))
+    color_3 = SolidColor(Vec3(0.8,0.6,0.2))
+    gray_1 = SolidColor(Vec3(0.7,0.7,0.7))
+    red = SolidColor(Vec3(1.0,0.0,0.0))
+    black = SolidColor(Vec3(0.0,0.0,0.0))
+
+    image_1 = Image.open(Path("./textures/ves_logo_black.bmp"))
+    image_2 = Image.open(Path("./textures/v_logo2.png"))
+    image_texture_1 = ImageTexture(image_1, "ves")
+    image_texture_2 = ImageTexture(image_2, "ves")
+    # diffuse_3 = Lambertian(image_texture_1, name="diffuse_3")
+    diffuse_3 = Lambertian(image_texture_2, name="diffuse_3")
+    diffuse_red = Lambertian(red, name="red")
+    diffuse_black = Lambertian(black, name="lack")
+    # metal_3 = Metal(image_texture_1, name="metal_3")
+    metal_3 = Metal(gray_1, name="metal_3")
+
+    # diffuse_1 = Lambertian(color_1, name="diffuse_1")
+    # diffuse_2 = Lambertian(color_2, name="diffuse_2")
+    # metal_1 = Metal(color_3, fuzziness=0.3, name="metal_1")
+    # dielectric_1 = Dielectric(1.5, name="dielectric_1")
+
+    world = GeometryList()
+
+    # world.add(Sphere(Vec3(-2.0,3.75,0), 4.0, metal_3))
+    world.add(Sphere(Vec3(-2.0,3.75,0), 4.0, diffuse_3))
+
+    # odd_color = SolidColor(Vec3(0.2, 0.3, 0.1))
+    odd_color = SolidColor(Vec3(0.8, 0.0, 0.0))
+    # even_color = SolidColor(Vec3(0.9, 0.9, 0.9))
+    even_color = SolidColor(Vec3(0.0, 0.0, 0.0))
+    checker_board = CheckerBoard(even_color, odd_color, spacing=3)
+    diffuse_2 = Lambertian(checker_board, name="diffuse_checkerboard")
+
+    # plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(10., 0, 0), normal=Vec3(-1., 0, 0), material=diffuse_red)
+    # world.add(plane_1)
+
+    # plane_2 = Plane.plane_from_point_and_normal(pt=Vec3(-10, 0, 0), normal=Vec3(1.0, 0, 0), material=diffuse_black)
+    plane_2 = Plane.plane_from_point_and_normal(pt=Vec3(-10, 0, 0), normal=Vec3(1.0, 0, 0), material=diffuse_2)
+    world.add(plane_2)
+
+    world.add(Disc(center=Vec3(-2.0,-1,0), normal=Vec3(0,1,0), radius=3.0, material=diffuse_3))
+
+    ambient = Vec3(0.7, 0.7, 0.7)
+    # background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    background = SolidColor(Vec3(0.7, 0.7, 0.7))
+    # light_1 = PointLight(pos=Vec3(0, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    light_1 = PointLight(pos=Vec3(-1, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))
+    # light_2 = PointLight(pos=Vec3(0, 10, 5.0), color=Vec3(0.1, 0.1, 0.25))  # blue light to the left
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
+
+    camera = Camera(look_from=Vec3(5, 1, 0), look_at=Vec3(0, 0, 0), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.0, focus_dist=20)
+    return {'scene': scene, 'camera': camera}
+
+def create_ves_2(settings=None):
+    # color_1 = SolidColor(Vec3(0.7, 0.3, 0.3))
+    # color_2 = SolidColor(Vec3(0.8, 0.8, 0))
+    # color_3 = SolidColor(Vec3(0.8,0.6,0.2))
+    gray_1 = SolidColor(Vec3(0.7,0.7,0.7))
+    red = SolidColor(Vec3(1.0,0.0,0.0))
+    black = SolidColor(Vec3(0.0,0.0,0.0))
+
+    image_1 = Image.open(Path("./textures/ves_logo_black.bmp"))
+    # image_2 = Image.open(Path("./textures/v_logo2.png"))
+    image_2 = Image.open(Path("./textures/v_logo3.png"))
+    image_texture_1 = ImageTexture(image_1, "ves")
+    image_texture_2 = ImageTexture(image_2, "ves")
+    # diffuse_3 = Lambertian(image_texture_1, name="diffuse_3")
+    diffuse_3 = Lambertian(image_texture_2, name="diffuse_3")
+    diffuse_red = Lambertian(red, name="red")
+    diffuse_black = Lambertian(black, name="lack")
+    # metal_3 = Metal(image_texture_1, name="metal_3")
+    metal_3 = Metal(image_texture_2, name="metal_3")
+    # metal_3 = Metal(gray_1, name="metal_3")
+
+    # diffuse_1 = Lambertian(color_1, name="diffuse_1")
+    # diffuse_2 = Lambertian(color_2, name="diffuse_2")
+    # metal_1 = Metal(color_3, fuzziness=0.3, name="metal_1")
+    # dielectric_1 = Dielectric(1.5, name="dielectric_1")
+
+    world = GeometryList()
+
+    # world.add(Sphere(Vec3(-2.0,3.75,0), 4.0, metal_3))
+    # world.add(Sphere(Vec3(-2.0,1.0,0), 1.0, diffuse_3))
+    # world.add(Sphere(Vec3(-2.0,0.5,0), 0.3, diffuse_3))
+
+    for i in range(30):
+        # x = -2.0 + 1.5 * (random() - 0.5)
+        x = -1.5 + 1.5 * (random() - 0.5)
+        y = 0.5 + 2.0 * (random() - 0.5)
+        # z = 0.0 + 3.0 * (0.5 - random())
+        z = 0.0 + 4.0 * (0.5 - random())
+        # radius = 0.25 + 0.1*(random() - 0.5)
+        radius = 0.15 + 0.1*(random() - 0.5)
+        # world.add(Sphere(Vec3(x,y,z), radius, diffuse_3))
+        world.add(Sphere(Vec3(x,y,z), radius, metal_3))
+
+    # odd_color = SolidColor(Vec3(0.2, 0.3, 0.1))
+    odd_color = SolidColor(Vec3(0.8, 0.0, 0.0))
+    # even_color = SolidColor(Vec3(0.9, 0.9, 0.9))
+    even_color = SolidColor(Vec3(0.0, 0.0, 0.0))
+    checker_board = CheckerBoard(even_color, odd_color, spacing=3)
+    # diffuse_2 = Lambertian(checker_board, name="diffuse_checkerboard")
+    diffuse_2 = Lambertian(image_texture_1, name="diffuse_checkerboard")
+
+    # plane_1 = Plane.plane_from_point_and_normal(pt=Vec3(10., 0, 0), normal=Vec3(-1., 0, 0), material=diffuse_red)
+    # world.add(plane_1)
+
+    # plane_2 = Plane.plane_from_point_and_normal(pt=Vec3(-10, 0, 0), normal=Vec3(1.0, 0, 0), material=diffuse_black)
+    # plane_2 = Plane.plane_from_point_and_normal(pt=Vec3(-10, 0, 0), normal=Vec3(1.0, 0, 0), material=diffuse_2)
+    # world.add(plane_2)
+
+    # world.add(Disc(center=Vec3(-2.0,-1,0), normal=Vec3(0,1,0), radius=3.0, material=diffuse_3))
+    world.add(Disc(center=Vec3(-2.0,-1,0), normal=Vec3(0,1,0), radius=3.0, material=diffuse_2))
+
+    ambient = Vec3(0.7, 0.7, 0.7)
+    # background = SolidColor(Vec3(0.5, 0.7, 1.0))
+    background = SolidColor(Vec3(0.7, 0.7, 0.7))
+    # light_1 = PointLight(pos=Vec3(0, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))  # light directly above sphere
+    light_1 = PointLight(pos=Vec3(-1, 10, 0.35), color=Vec3(0.25, 0.25, 0.25))
+    # light_2 = PointLight(pos=Vec3(0, 10, 5.0), color=Vec3(0.1, 0.1, 0.25))  # blue light to the left
+    lights = [light_1]
+    scene = Scene(world, ambient=ambient, lights=lights, background=background)
+
+    camera = Camera(look_from=Vec3(5, 1, 0), look_at=Vec3(0, 0, 0), vup=Vec3(0, 1, 0), vert_fov=20, aperature=0.0, focus_dist=20)
+    return {'scene': scene, 'camera': camera}

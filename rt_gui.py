@@ -30,6 +30,13 @@ can use the following environment variables (or stored in .env file):
 Len Wanger, copyright 2020
 """
 
+# try:
+#     import pyjion
+#     pyjion.enable()
+#     print("pyjion enabled")
+# except ModuleNotFoundError:
+#     print("pyjion not enabled")
+
 from multiprocessing import Process, Pipe
 
 from datetime import datetime
@@ -56,12 +63,15 @@ from create_scene_funcs import *
 # CREATOR_FUNC = create_checkerboard_world
 # CREATOR_FUNC = create_checkerboard_world_2
 # CREATOR_FUNC = create_image_texture_world
-CREATOR_FUNC = create_canonical_1  # ball over plane
+# CREATOR_FUNC = create_canonical_1  # ball over plane
 # CREATOR_FUNC = create_canonical_2  # teapot
 # CREATOR_FUNC = create_stl_mesh
 # CREATOR_FUNC = create_quad_world
 # CREATOR_FUNC = create_disc_test_world
 # CREATOR_FUNC = create_perlin_1
+# CREATOR_FUNC = create_ves_1  # Velocity Logo
+CREATOR_FUNC = create_ves_2  # Velocity Logo
+
 
 
 # messages from GUI
@@ -323,7 +333,7 @@ class App(tk.Frame):
 
     def update_canvas(self, l: int, b: int, chunk_num: int, total_chunks: int):
         shape = self.fb.fb.shape
-        self.im = Image.frombytes("RGB", (shape[1],shape[0]), self.fb.fb.astype('b').tostring())
+        self.im = Image.frombytes("RGB", (shape[1],shape[0]), self.fb.fb.astype('b').tobytes())
         self.photo = ImageTk.PhotoImage(image=self.im)
         self.canvas.create_image(0,0,image=self.photo,anchor=tk.NW)
         if chunk_num is not None:

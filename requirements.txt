@@ -5,3 +5,4 @@ python-dotenv
 tqdm
 numpy-stl
 colorcet
+cooked_input
