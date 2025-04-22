@@ -323,7 +323,7 @@ class App(tk.Frame):
 
     def update_canvas(self, l: int, b: int, chunk_num: int, total_chunks: int):
         shape = self.fb.fb.shape
-        self.im = Image.frombytes("RGB", (shape[1],shape[0]), self.fb.fb.astype('b').tostring())
+        self.im = Image.frombytes("RGB", (shape[1],shape[0]), self.fb.fb.astype('b').tobytes())
         self.photo = ImageTk.PhotoImage(image=self.im)
         self.canvas.create_image(0,0,image=self.photo,anchor=tk.NW)
         if chunk_num is not None:
