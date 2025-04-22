@@ -135,7 +135,12 @@ class Plane(Geometry):
         self.inverse_normal = -self.normal  # pre-compute to speed up hit testing
 
         # pre-calculate two basis vectors on the plane (for u,v calculation)
-        self._basis_vec_1 = cross(self.normal, Vec3(1, 0, 0)).normalize()
+        #self._basis_vec_1 = cross(self.normal, Vec3(1, 0, 0)).normalize()
+        try:
+            self._basis_vec_1 = cross(self.normal, Vec3(1, 0, 0)).normalize()
+        except ZeroDivisionError:
+            self._basis_vec_1 = Vec3(0.0,0.0,0.0)  # force going into the EPSILON if below
+            
         if self._basis_vec_1.length() < EPSILON:  # normal is parallel to (1,0,0), so use a different vector
             self._basis_vec_1 = cross(self.normal, Vec3(0, 0, 1)).normalize()
 
