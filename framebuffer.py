@@ -14,13 +14,13 @@ ORIGIN_UL = 1
 
 
 class FrameBuffer():
-    def __init__(self, x_size: int, y_size: int, dtype=np.int8, depth='s', origin="ll"):
+    def __init__(self, x_size: int, y_size: int, dtype=np.uint8, depth='s', origin="ll"):
         """
         Create a numpy array to act as a framebuffer.
 
         :param x_size:
         :param y_size:
-        :param dtype: the data type for each pixel. Defaults to np.int8
+        :param dtype: the data type for each pixel. Defaults to np.unit8
         :param depth: the frame buffer depth - s - one value, rgb - 3 values per pixel, rgba - 4 vals per pixel
         :param origin: either "ll" (lower left - default) or "ul" upper left
 
@@ -133,7 +133,7 @@ def save_image(img: Image, filename: str) -> None:
 
 if __name__ == "__main__":
     # test framebuffer utilities
-    fb = FrameBuffer(700, 512, np.int8, origin="UL")
+    fb = FrameBuffer(700, 512, np.uint8, origin="UL")
     print(f'fb.shape={fb.shape}, fb.dtype={fb.dtype}')
     print(f'fb size=({fb.x_size}, {fb.y_size}), fb.dtype={fb.dtype}')
 

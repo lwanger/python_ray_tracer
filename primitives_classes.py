@@ -584,6 +584,185 @@ class STLMesh(Geometry):
         hr = self.bvh.hit(ray, t_min, t_max)
         return hr
 
+###
+# TODO:
+# class Quad(Geometry):
+#     def __init__(self, v0: Vec3, v1: Vec3, v2: Vec3, material: Material, uv0=None, uv1=None, uv2=None, normal: Vec3=None):
+#         """
+#         :param v0: point 0 of the quad (Vec3) - corner 1
+#         :param v1: point 1 of the quad (Vec3) - corner 2
+#         :param v2: point 2 of the quad (Vec3) - corner 3
+#         :param material: material for the triangle (Material)
+#         :param normal: normal for the triangle (Vec3). If none, calculated from the vertices
+#         :param uv0: u,v coordinates for v0 (only used if material.uv_used is True)
+#         :param uv1: u,v coordinates for v1 (only used if material.uv_used is True)
+#         :param uv2: u,v coordinates for v2 (only used if material.uv_used is True)
+#         """
+#         super().__init__(material)
+#         self.v0 = v0
+#         self.v1 = v1
+#         self.v2 = v2
+#         v0v1 = v1 - v0
+#         v0v2 = v2 - v0
+#
+#         if normal is None:
+#             self.normal = cross(v0v1, v0v2).normalize()
+#         else:
+#             self.normal = normal.normalize()
+#
+#         self.inverse_normal = -self.normal  # pre-compute for hit testing
+#
+#         if material.uv_used:
+#             use_uv0 = uv0 if uv0 is not None else (1,0.5)
+#             use_uv1 = uv1 if uv1 is not None else (0,1)
+#             use_uv2 = uv2 if uv2 is not None else (0,0)
+#             self.u = Vec3(use_uv0[0], use_uv1[0], use_uv2[0])
+#             self.v = Vec3(use_uv0[1], use_uv1[1], use_uv2[1])
+#
+#             # pre-compute the following for u,v calculations
+#             self.v0v1 = v0v1  # pre-compute for barycentric calc to get uv.
+#             self.v0v2 = v0v2  # pre-compute for barycentric calc to get uv.
+#             self.d00 = dot(v0v1, v0v1)
+#             self.d01 = dot(v0v1, v0v2)
+#             self.d11 = dot(v0v2, v0v2)
+#             self.inv_denom = 1 / ((self.d00 * self.d11) - (self.d01 * self.d01))
+#
+#     def __repr__(self):
+#         return f'Triangle(v0={self.v0}, v1={self.v1}, v2={self.v2},  material={self.material})'
+#
+#     def has_bbox(self) -> bool:
+#         return True
+#
+#     def bounding_box(self, t0: float, t1: float) -> AABB:
+#         v0 = self.v0
+#         v1 = self.v1
+#         v2 = self.v2
+#
+#         x_min = min(v0.x, v1.x, v2.x)
+#         x_max = max(v0.x, v1.x, v2.x)
+#         y_min = min(v0.y, v1.y, v2.y)
+#         y_max = max(v0.y, v1.y, v2.y)
+#         z_min = min(v0.z, v1.z, v2.z)
+#         z_max = max(v0.z, v1.z, v2.z)
+#         vmin = Vec3(x_min,y_min,z_min)
+#         vmax = Vec3(x_max,y_max,z_max)
+#         aabb = AABB(vmin, vmax)
+#         return aabb
+#
+#     def get_uv(self, p: Vec3):
+#         # based on barycentric coords of the triangle.
+#         # from: https://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
+#
+#         # calculate barycentric coordinates a,b,c for the point
+#         v2 = p - self.v0
+#         d20 = dot(v2, self.v0v1)
+#         d21 = dot(v2, self.v0v2)
+#         b = (self.d11*d20 - self.d01*d21) * self.inv_denom
+#         c = (self.d00*d21 - self.d01*d20) * self.inv_denom
+#         a = 1.0 - b - c
+#
+#         # now calculate u,v
+#         pu = a*self.u.x + b*self.u.y + c*self.u.z
+#         pv = a*self.v.x + b*self.v.y + c*self.v.z
+#
+#         return (pu, pv)
+#
+#     def point_on(self):
+#         # random point on the triangle.
+#         # From  https://pharr.org/matt/blog/2019/02/27/triangle-sampling-1.html#:~:text=Consider%20sampling%20a%20point%20on%20a%20triangular%20light,probability%20if%20the%20sample%20u%20is%20uniformly%20distributed.
+#         uf = int(random() * (1<<32))
+#         A = (1, 0)
+#         B = (0, 1)
+#         C = (0, 0)  # Barycentrics
+#
+#         # l = [(uf >> (2 * (15 - i))) & 3 for i in range(16)]
+#
+#         for i in range(16): # for each base-4 digit
+#             d = (uf >> (2 * (15 - i))) & 3  # Get the digit
+#
+#             if d==0:
+#                 An = ((B[0] + C[0])/2, (B[1] + C[1])/2)
+#                 Bn = ((A[0] + C[0])/2, (A[1] + C[1])/2)
+#                 Cn = ((A[0] + B[0])/2, (A[1] + B[1])/2)
+#             elif d==1:
+#                 # An = A
+#                 An = (A[0], A[1])
+#                 Bn = ((A[0] + B[0])/2, (A[1] + B[1])/2)
+#                 Cn = ((A[0] + C[0])/2, (A[1] + C[1])/2)
+#             elif d==2:
+#                 An = ((B[0] + A[0])/2, (B[1] + A[1])/2)
+#                 # Bn = B
+#                 Bn = (B[0],B[1])
+#                 Cn = ((B[0] + C[0])/2, (B[1] + C[1])/2)
+#             else:  # d==3
+#                 An = ((C[0] + A[0])/2, (C[1] + A[1])/2)
+#                 Bn = ((C[0] + B[0])/2, (C[1] + B[1])/2)
+#                 # Cn = C
+#                 Cn = (C[0],C[1])
+#             A = An
+#             B = Bn
+#             C = Cn
+#
+#         # r = (A + B + C) / 3
+#         x = (A[0] + B[0] + C[0]) / 3
+#         y = (A[1] + B[1] + C[1]) / 3
+#         v = Vec3(x, y, 1 - x - y)
+#         return v
+#
+#     def hit(self, ray: Ray, t_min: float, t_max: float) -> Optional[HitRecord]:
+#         # Moller Trumbore method -- https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+#         hr = None
+#
+#         v0 = self.v0
+#         v1 = self.v1
+#         v2 = self.v2
+#         edge1 = v1 - v0
+#         edge2 = v2 - v0
+#         h = cross(ray.direction, edge2)
+#         a = dot(edge1, h)
+#
+#         if NEG_EPSILON < a < EPSILON:  # ray parallel to triangle
+#             return hr
+#
+#         f = 1 / a
+#         s = ray.origin - v0
+#         u = f * dot(s, h)
+#
+#         if u < 0 or u > 1:
+#             return hr
+#
+#         q = cross(s, edge1)
+#         v = f * dot(ray.direction, q)
+#
+#         if v < 0 or u + v > 1:
+#             return hr
+#
+#         # point is in triangle... return t
+#         t = f * dot(edge2, q)
+#
+#         if t < EPSILON:  # intersects with line, not ray
+#             return hr
+#
+#         ri = ray.origin + ray.direction.mul_val(t)
+#         vd = dot(self.normal, ray.direction) # faster way? Already computed?
+#
+#         if vd < 0:
+#             rn = self.normal
+#         else:
+#             rn = self.inverse_normal
+#
+#         if t_min < t < t_max:
+#             if self.material.uv_used:
+#                 u, v = self.get_uv(ri)
+#             else:
+#                 u = v = None
+#
+#             hr = HitRecord(ri, rn, t, self.material, u, v)
+#             hr.set_face_normal(ray, rn)
+#
+#         return hr
+###
+
 
 if __name__ == '__main__':
     v1 = Vec3(1.0, 2.0, 3.0)
