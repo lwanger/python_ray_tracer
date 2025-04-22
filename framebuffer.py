@@ -20,7 +20,7 @@ class FrameBuffer():
 
         :param x_size:
         :param y_size:
-        :param dtype: the data type for each pixel. Defaults to np.unit8
+        :param dtype: the data type for each pixel. Defaults to np.uint8
         :param depth: the frame buffer depth - s - one value, rgb - 3 values per pixel, rgba - 4 vals per pixel
         :param origin: either "ll" (lower left - default) or "ul" upper left
 

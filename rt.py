@@ -24,8 +24,8 @@ from material_classes import ray_color
 from create_scene_funcs import *
 
 
-#CREATOR_FUNC = create_canonical_1
-CREATOR_FUNC = create_perlin_1
+CREATOR_FUNC = create_canonical_1
+#CREATOR_FUNC = create_perlin_1
 
 
 res_settings = {
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     world = CREATOR_FUNC()
     scene = world['scene']
     camera = world['camera']
-    fb = FrameBuffer(settings['x_size'], settings['y_size'], np.int8, 'rgb')
+    fb = FrameBuffer(settings['x_size'], settings['y_size'], np.uint8, 'rgb')
 
     x_size = settings['x_size']
     y_size = settings['y_size']
