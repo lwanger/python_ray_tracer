@@ -54,8 +54,12 @@ from geometry_classes import Vec3
 
 from create_scene_funcs import *
 
+# CPROFILE
+import cProfile
+import pstats
 
-# CREATOR_FUNC = create_simple_world
+
+#CREATOR_FUNC = create_simple_world
 # CREATOR_FUNC = create_random_world
 # CREATOR_FUNC = create_simple_world_2
 # CREATOR_FUNC = create_simple_world_3
@@ -63,14 +67,15 @@ from create_scene_funcs import *
 # CREATOR_FUNC = create_checkerboard_world
 # CREATOR_FUNC = create_checkerboard_world_2
 # CREATOR_FUNC = create_image_texture_world
-# CREATOR_FUNC = create_canonical_1  # ball over plane
+CREATOR_FUNC = create_canonical_1  # ball over plane
 # CREATOR_FUNC = create_canonical_2  # teapot
 # CREATOR_FUNC = create_stl_mesh
 # CREATOR_FUNC = create_quad_world
 # CREATOR_FUNC = create_disc_test_world
 # CREATOR_FUNC = create_perlin_1
 # CREATOR_FUNC = create_ves_1  # Velocity Logo
-CREATOR_FUNC = create_ves_2  # Velocity Logo
+# CREATOR_FUNC = create_ves_2  # Velocity Logo
+#CREATOR_FUNC = create_ves_3  # Velocity Logo
 
 
 
@@ -192,7 +197,7 @@ class App(tk.Frame):
 
 
     def create_frame_buffer(self):
-        self.fb = FrameBuffer(self.x_size, self.y_size, np.int8, 'rgb')
+        self.fb = FrameBuffer(self.x_size, self.y_size, np.uint8, 'rgb')
 
 
     def run_gui(self):
@@ -389,5 +394,15 @@ class App(tk.Frame):
 
 if __name__ == '__main__':
     dotenv.load_dotenv()
+
+    if True:    # CPROFILE
+        profiler = cProfile.Profile()
+        profiler.enable()
+
     app = App()
     app.run_gui()
+
+    if True:    # CPROFILE
+        profiler.disable()
+        stats = pstats.Stats(profiler).sort_stats('cumtime')
+        stats.print_stats()

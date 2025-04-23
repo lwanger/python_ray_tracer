@@ -18,7 +18,7 @@ from geometry_classes import Vec3
 # Y_SIZE = 512
 #
 # # test framebuffer utilities
-# fb = FrameBuffer(512, 512, np.int8, 'rgb')
+# fb = FrameBuffer(512, 512, np.uint8, 'rgb')
 #
 # # write to framebuffer
 # for y in range(Y_SIZE):
@@ -32,7 +32,7 @@ X_SIZE = 200
 Y_SIZE = 100
 
 # test framebuffer utilities
-fb = FrameBuffer(X_SIZE, Y_SIZE, np.int8, 'rgb')
+fb = FrameBuffer(X_SIZE, Y_SIZE, np.uint8, 'rgb')
 
 # write to framebuffer
 for y in range(Y_SIZE):

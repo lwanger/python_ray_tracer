@@ -23,6 +23,9 @@ from framebuffer import FrameBuffer, save_image
 from material_classes import ray_color
 from create_scene_funcs import *
 
+import cProfile
+import pstats
+
 
 CREATOR_FUNC = create_canonical_1
 #CREATOR_FUNC = create_perlin_1
@@ -154,7 +157,17 @@ if __name__ == '__main__':
     image_filename = settings['image_filename']
 
     print(f'starting render')
+
+    if False:    # CPROFILE
+        profiler = cProfile.Profile()
+        profiler.enable()
+
     elapsed_time = render(scene, camera, fb, x_size, y_size, samples_per_pixel, max_depth, chunk_size)
+
+    if False:    # CPROFILE
+        profiler.disable()
+        stats = pstats.Stats(profiler).sort_stats('cumtime')
+        stats.print_stats()
 
     img = fb.make_image()
     save_image(img, image_filename)

@@ -214,7 +214,7 @@ if __name__ == '__main__':
     print(
         f'image_file={image_file}, use_res={use_res}: x_size={X_SIZE}, y_size={Y_SIZE}, samples_per_pixel={SAMPLES_PER_PIXEL}, max_depth={MAX_DEPTH}')
 
-    fb = FrameBuffer(X_SIZE, Y_SIZE, np.int8, 'rgb')
+    fb = FrameBuffer(X_SIZE, Y_SIZE, np.uint8, 'rgb')
 
     look_from = Vec3(13,2,3)
     look_at = Vec3(0,0,0)
